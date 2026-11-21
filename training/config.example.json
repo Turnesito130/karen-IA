@@ -1,0 +1,13 @@
+{
+  "model_path": "/ruta/al/modelo-base-local",
+  "dataset_dir": "training/datasets/prepared",
+  "output_dir": "training/checkpoints/karen",
+  "max_seq_length": 1024,
+  "rank": 8,
+  "epochs": 1,
+  "batch_size": 1,
+  "grad_accumulation": 4,
+  "learning_rate": 0.0002,
+  "load_in_4bit": true,
+  "offline": true
+}

@@ -1,0 +1,13 @@
+# Datos personales o aún no revisados: no subir por accidente
+/datasets/raw.jsonl
+/datasets/prepared/
+/checkpoints/
+/models/
+/trainer/
+*.safetensors
+*.gguf
+*.bin
+*.pt
+*.pth
+*.onnx
+*.log

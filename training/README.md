@@ -52,13 +52,15 @@ python training/train_unsloth.py \
 
 Empieza con una ejecución pequeña. Ajusta longitud, rango LoRA, épocas y batch según modelo y VRAM. El script guarda un adaptador LoRA y configuración. No sobrescribe salidas existentes salvo que se indique `--overwrite`.
 
+También puedes copiar y editar `training/config.example.json` y ejecutar `python training/train_unsloth.py --config training/mi-config.json`. Los argumentos de la línea de comandos prevalecen sobre los valores del JSON.
+
 ## Evaluación
 ```bash
 python training/evaluate_model.py --model-path /ruta/al/modelo-base-local --test training/datasets/prepared/test.jsonl --output training/evaluation/base.jsonl
 python training/evaluate_model.py --model-path /ruta/al/modelo-base-local --adapter training/checkpoints/karen-v1/adapter --test training/datasets/prepared/test.jsonl --output training/evaluation/adapted.jsonl
 ```
 
-Compara ambas salidas manualmente con el mismo test. Evalúa exactitud, seguimiento de instrucciones, honestidad ante incertidumbre, seguridad y regresiones. No uses test para seguir entrenando. La pérdida de entrenamiento no demuestra por sí sola que Karen sea más capaz.
+Compara ambas salidas manualmente con el mismo test. Usa la rúbrica de `training/EVALUATION_RUBRIC.md` para puntuar exactitud, honestidad, seguimiento de instrucciones, seguridad y claridad. No uses test para seguir entrenando. La pérdida de entrenamiento no demuestra por sí sola que Karen sea más capaz.
 
 ## Exportación opcional
 ```bash

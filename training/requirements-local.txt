@@ -1,0 +1,4 @@
+# Dependencias del preparador nanoGPT de CPU.
+# Instala PyTorch CPU por separado para evitar descargar una build CUDA innecesaria:
+# python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+numpy>=1.24,<3

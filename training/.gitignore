@@ -1,12 +1,12 @@
 # Datos personales o no revisados y artefactos pesados: no subir por accidente
 /datasets/raw.jsonl
 /datasets/raw/
- /datasets/prepared/
- /checkpoints/
- /evaluation/
- /exports/
- /models/
- /trainer/
+/datasets/prepared/
+/checkpoints/
+/evaluation/
+/exports/
+/models/
+/trainer/
 *.safetensors
 *.gguf
 *.bin

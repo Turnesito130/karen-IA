@@ -1,0 +1,4 @@
+# Dependencias solo para preparar y validar datasets.
+# Instala Unsloth por separado siguiendo su guía oficial y la combinación
+# PyTorch/CUDA compatible con el hardware.
+datasets>=2.19,<4

@@ -1,7 +1,7 @@
 {
-  "name": "ev",
-  "short_name": "ev",
-  "description": "Asistente de IA con voz",
+  "name": "Karen",
+  "short_name": "Karen",
+  "description": "Karen, asistente personal con cerebro propio",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

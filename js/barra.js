@@ -1,7 +1,7 @@
-/* E.D.-2 · Barra de texto fija para conversar por escrito */
+/* Karen · Barra de texto fija para conversar por escrito */
 const bar = document.createElement("form");
 bar.id = "bar";
-bar.innerHTML = '<span id="bh" title="Arrastra para mover; doble clic para volver abajo" aria-label="Mover barra">&#8942;&#8942;</span><input id="bin" type="text" autocomplete="off" placeholder="Escribe un mensaje a E.D.…" aria-label="Mensaje para E.D."><button id="bgo" type="submit">Enviar</button>';
+bar.innerHTML = '<span id="bh" title="Arrastra para mover; doble clic para volver abajo" aria-label="Mover barra">&#8942;&#8942;</span><input id="bin" type="text" autocomplete="off" placeholder="Escribe un mensaje a Karen…" aria-label="Mensaje para Karen"><button id="bgo" type="submit">Enviar</button>';
 document.body.appendChild(bar);
 const bcss = document.createElement("style");
 bcss.textContent = `

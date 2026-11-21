@@ -1,21 +1,19 @@
-# Formato de datos de Karen
+# Datos de entrenamiento de Karen
 
-Crea `raw.jsonl` con **un objeto JSON por línea**:
-
-```json
-{"instruction":"Explica qué es la fotosíntesis.","input":"","output":"La fotosíntesis es el proceso por el que...","source":"libro de biología, capítulo 3","approved":true}
-{"instruction":"Calcula el resultado y explica los pasos.","input":"12 × 8","output":"12 × 8 = 96. Multiplico 12 por 8.","source":"ejemplo propio revisado","approved":true}
-```
+Usa JSONL: un objeto JSON por línea. Copia `raw.example.jsonl` como `raw.jsonl` para empezar.
 
 Campos obligatorios:
-- `instruction`: petición o pregunta.
-- `output`: respuesta de referencia revisada.
-- `approved`: debe ser exactamente `true`.
+- `instruction`: pregunta o instrucción.
+- `output`: respuesta objetivo revisada por una persona.
+- `approved`: booleano exactamente `true`; no se aceptan ejemplos sin aprobación explícita.
 
-Campos opcionales:
-- `input`: contexto adicional.
-- `source`: procedencia comprobable.
+Opcionales: `input` (contexto) y `source` (procedencia verificable).
 
-No uses datos personales, secretos, material sin licencia ni respuestas inventadas. Evita meter la misma pregunta con respuestas contradictorias. La herramienta detecta duplicados exactos y separa por huella de ejemplo para evitar que una copia exacta aparezca a la vez en entrenamiento y evaluación.
+Buenas prácticas:
+- Escribe respuestas correctas y consistentes con las reglas de Karen.
+- Incluye variedad de temas, dificultades y casos donde Karen debe reconocer incertidumbre.
+- Evita contradicciones, duplicados, datos privados, secretos y material sin licencia.
+- No uses respuestas generadas por Karen como verdad de referencia sin revisión humana.
+- Mantén un test separado que no se use para entrenar.
 
-El directorio `prepared/` se genera automáticamente y no debe editarse a mano.
+El validador excluye filas no aprobadas y duplicados exactos. No puede verificar que una respuesta sea verdadera: eso requiere revisión humana.

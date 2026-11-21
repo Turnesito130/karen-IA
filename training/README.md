@@ -71,3 +71,26 @@ La exportación puede necesitar mucha memoria y disco. GGUF depende de la compat
 
 ## Estado verificable
 Los scripts pueden comprobarse sintácticamente sin GPU; eso no equivale a instalar Unsloth ni completar un entrenamiento. El entrenamiento solo se considera verificado tras ejecutarlo en hardware compatible, conservar logs y revisar respuestas. Los datos y artefactos pesados se excluyen de Git.
+
+
+## Entrenamiento local experimental con nanoGPT (CPU)
+
+Para el Windows conocido (Intel UHD, 8 GB RAM, sin CUDA NVIDIA) hay un flujo experimental de caracteres:
+- Guía: `training/nanogpt/README.md`
+- Preparador del corpus: `training/nanogpt/prepare_nanogpt.py`
+- Lanzador PowerShell: `training/run_local_nanogpt.ps1`
+- Dependencias auxiliares: `training/requirements-local.txt`
+
+Desde la raíz del repositorio, prepara primero los datos (ver más abajo) y ejecuta:
+```powershell
+powershell -ExecutionPolicy Bypass -File training/run_local_nanogpt.ps1
+```
+Esto clona nanoGPT en `external/nanoGPT` y ejecuta una configuración diminuta en CPU. Es un experimento de aprendizaje del pipeline; no produce un asistente conversacional comparable a un LLM.
+
+## Entrenamiento remoto con GPU en Kaggle
+
+Consulta `training/kaggle/README.md` para crear el Notebook, preparar el entorno, ejecutar el diagnóstico y lanzar el fine-tuning Unsloth. La GPU y el tiempo de sesión dependen de la disponibilidad y cuotas de Kaggle. Los datos enviados a Kaggle se procesan en infraestructura de terceros: no subas datos sensibles ni secretos.
+
+## Ejemplos iniciales
+
+`training/datasets/starter_examples.template.jsonl` contiene ejemplos de partida con `approved: false`. Revísalos, corrígelos y cópialos a `training/datasets/raw.jsonl` cambiando a `approved: true` únicamente los que apruebes. No se consideran aprobados automáticamente. Añade muchos más ejemplos diversos y verificados antes de un ajuste serio.

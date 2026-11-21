@@ -97,7 +97,7 @@ def main():
       "learning_rate":a.learning_rate,"logging_steps":5,"save_strategy":"epoch",
       "eval_strategy":"epoch","report_to":"none","seed":2026,"dataset_num_proc":1,
       "packing":False}
-    config=SFTConfig(**supported_kwargs(SFTConfig,config_values))
+    config=SFTConfig(**supported_kwargs(SFTConfig,config_values,allow_var_kwargs=False))
     trainer_values={"model":model,"args":config,"train_dataset":data["train"],
       "eval_dataset":data["validation"],"processing_class":tokenizer,"tokenizer":tokenizer}
     trainer=SFTTrainer(**supported_kwargs(SFTTrainer,trainer_values,allow_var_kwargs=False))

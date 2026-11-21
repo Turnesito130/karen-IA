@@ -81,3 +81,8 @@ En Ajustes hay dos controles nuevos: **Sincronizar memoria con Google Drive** y 
 ## Conocimiento local sin conexión
 
 La biblioteca inicial de Karen contiene 30 fichas educativas aprobadas en español, empaquetadas dentro del JavaScript que se carga desde `index.html`. Incluye ciencia, matemáticas, historia, tecnología, programación y lenguaje. Así, la recuperación de estas fichas no utiliza `fetch` ni necesita conexión, y también funciona cuando se abre el archivo local desde ChromeOS. El núcleo responde con el contenido encontrado y su identificador de fuente; si no encuentra material suficiente, debe reconocerlo en lugar de inventar. La biblioteca puede ampliarse con nuevas fichas revisadas.
+
+
+## Entrenamiento supervisado experimental
+
+El toolkit opcional de Python está en [training/README.md](training/README.md). Permite validar ejemplos aprobados, eliminar duplicados exactos, crear particiones reproducibles de entrenamiento/validación/test y preparar un ajuste LoRA con Unsloth sobre un modelo compatible que ya esté descargado localmente. No se ejecuta dentro del navegador ni en el Chromebook bloqueado, no descarga modelos y no se conecta automáticamente al chat. El núcleo JavaScript propio sigue siendo independiente. Consulta primero las limitaciones de hardware, privacidad y evaluación documentadas en esa guía.

@@ -5,10 +5,10 @@ import argparse, hashlib, json, math, random, re
 from pathlib import Path
 
 def norm(value: str) -> str:
-    return re.sub(r"\\s+", " ", value).strip().casefold()
+    return re.sub(r"\s+", " ", value).strip().casefold()
 
 def fingerprint(item: dict) -> str:
-    payload = "\\n".join(norm(str(item.get(k, ""))) for k in ("instruction", "input", "output"))
+    payload = "\n".join(norm(str(item.get(k, ""))) for k in ("instruction", "input", "output"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 def load_rows(path: Path):
@@ -52,7 +52,7 @@ def write_jsonl(path: Path, rows):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
         for row in rows:
-            f.write(json.dumps(row, ensure_ascii=False) + "\\n")
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -84,7 +84,7 @@ def main():
       "counts":{"accepted":n,"train":len(train),"validation":len(validation),"test":len(test)},
       "issues":issues,
       "warning":"La validación comprueba formato y aprobación, no la veracidad. Revisa procedencia, derechos, equilibrio y exactitud manualmente."}
-    (out / "report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8")
+    (out / "report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     print(json.dumps(report,ensure_ascii=False,indent=2))
 if __name__ == "__main__":
     main()

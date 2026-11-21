@@ -24,6 +24,8 @@ def main():
     for path in required:
         if not path.is_file():
             parser.error(f"falta {path}; ejecuta antes prepare_dataset.py")
+        if not path.read_text(encoding="utf-8").strip():
+            parser.error(f"{path} está vacío; añade más ejemplos o ajusta los porcentajes del split")
     if args.max_seq_length < 128 or args.rank < 1 or args.epochs <= 0:
         parser.error("max-seq-length debe ser >=128, rank >=1 y epochs >0")
     if args.offline:

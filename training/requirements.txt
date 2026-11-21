@@ -1,4 +1,7 @@
-# Dependencias solo para preparar y validar datasets.
-# Instala Unsloth por separado siguiendo su guía oficial y la combinación
-# PyTorch/CUDA compatible con el hardware.
-datasets>=2.19,<4
+# Instala PyTorch/CUDA y Unsloth por separado siguiendo su guía oficial.
+# https://docs.unsloth.ai/get-started/installing-unsloth
+datasets>=3.0,<5
+transformers>=4.45
+trl>=0.15
+peft>=0.13
+accelerate>=1.0

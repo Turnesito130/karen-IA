@@ -1,4 +1,4 @@
-/* E.D.-2 · Acciones locales */
+/* Karen · Acciones locales */
 const SITES = { maps:"https://www.google.com/maps", traductor:"https://translate.google.com", youtube:"https://www.youtube.com", gmail:"https://mail.google.com", classroom:"https://classroom.google.com", drive:"https://drive.google.com", calendario:"https://calendar.google.com", github:"https://github.com", spotify:"https://open.spotify.com", whatsapp:"https://web.whatsapp.com", wikipedia:"https://es.wikipedia.org", google:"https://www.google.com" };
 const NUM = { un:1, una:1, uno:1, dos:2, tres:3, cuatro:4, cinco:5, seis:6, siete:7, ocho:8, nueve:9, diez:10, quince:15, veinte:20, treinta:30 };
 const NUMRE = /\b(un|una|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|quince|veinte|treinta)\b/g;

@@ -1,4 +1,4 @@
-/* E.D.-2 · Copias de seguridad, importación y búsqueda de memoria.
+/* Karen · Copias de seguridad, importación y búsqueda de memoria.
    Incluye la memoria antigua, las tarjetas y la memoria estructurada del cerebro. */
 function searchMem(q, limit = 5) {
   const words = s => norm(String(s || "")).split(/[^a-z0-9]+/).filter(w => w.length > 2);
@@ -68,7 +68,7 @@ function importarMemoria(file) {
       }
       showSub("Copia importada: " + mergedNotes.length + " notas antiguas, " + mergedCards.length +
         " tarjetas y " + structuredCount + " recuerdos estructurados nuevos.");
-    } catch (e) { showSub("No pude importar: el archivo no tiene un formato válido de copia de E.D.-2. " + (e?.message || "")); }
+    } catch (e) { showSub("No pude importar: el archivo no tiene un formato válido de copia de Karen. " + (e?.message || "")); }
   };
   reader.onerror = () => showSub("No pude leer el archivo.");
   reader.readAsText(file);

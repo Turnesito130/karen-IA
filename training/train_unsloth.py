@@ -5,11 +5,12 @@ import argparse, inspect, json, os
 from pathlib import Path
 from datetime import datetime, timezone
 
-def supported_kwargs(callable_obj, values):
+def supported_kwargs(callable_obj, values, allow_var_kwargs=True):
     sig = inspect.signature(callable_obj)
-    if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
+    explicit = {k:v for k,v in values.items() if k in sig.parameters}
+    if allow_var_kwargs and any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()):
         return values
-    return {k:v for k,v in values.items() if k in sig.parameters}
+    return explicit
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -63,7 +64,7 @@ def main():
     data = load_dataset("json",data_files={"train":str(train_file),"validation":str(val_file)})
     def render(row):
         user = row["instruction"]
-        if row.get("input"): user += "\\n\\nContexto:\\n"+row["input"]
+        if row.get("input"): user += "\n\nContexto:\n"+row["input"]
         messages=[{"role":"user","content":user},{"role":"assistant","content":row["output"]}]
         return {"text":tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=False)}
     data=data.map(render)
@@ -78,7 +79,7 @@ def main():
     config=SFTConfig(**supported_kwargs(SFTConfig,config_values))
     trainer_values={"model":model,"args":config,"train_dataset":data["train"],
       "eval_dataset":data["validation"],"processing_class":tokenizer,"tokenizer":tokenizer}
-    trainer=SFTTrainer(**supported_kwargs(SFTTrainer,trainer_values))
+    trainer=SFTTrainer(**supported_kwargs(SFTTrainer,trainer_values,allow_var_kwargs=False))
     result=trainer.train()
     adapter=a.output_dir/"adapter"
     model.save_pretrained(str(adapter))
@@ -89,7 +90,7 @@ def main():
       "batch_size":a.batch_size,"grad_accumulation":a.grad_accumulation,
       "learning_rate":a.learning_rate,"load_in_4bit":a.load_in_4bit,
       "offline":a.offline,"train_metrics":getattr(result,"metrics",{})}
-    (a.output_dir/"run.json").write_text(json.dumps(metadata,ensure_ascii=False,indent=2,default=str)+"\\n",encoding="utf-8")
+    (a.output_dir/"run.json").write_text(json.dumps(metadata,ensure_ascii=False,indent=2,default=str)+"\n",encoding="utf-8")
     print("Adaptador guardado en:",adapter)
     print("No está conectado todavía al chat de Karen. Evalúa antes de desplegar.")
 if __name__=="__main__":

@@ -14,9 +14,10 @@ def supported_kwargs(callable_obj, values, allow_var_kwargs=True):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--model-path", required=True)
-    p.add_argument("--dataset-dir", type=Path, required=True)
-    p.add_argument("--output-dir", type=Path, required=True)
+    p.add_argument("--config", type=Path, help="JSON opcional con valores por defecto")
+    p.add_argument("--model-path")
+    p.add_argument("--dataset-dir", type=Path)
+    p.add_argument("--output-dir", type=Path)
     p.add_argument("--max-seq-length", type=int, default=1024)
     p.add_argument("--rank", type=int, default=8)
     p.add_argument("--epochs", type=float, default=1.0)
@@ -26,7 +27,27 @@ def main():
     p.add_argument("--load-in-4bit", action=argparse.BooleanOptionalAction, default=True)
     p.add_argument("--offline", action="store_true")
     p.add_argument("--overwrite", action="store_true")
+    known, _ = p.parse_known_args()
+    if known.config:
+        if not known.config.is_file():
+            p.error(f"No existe el archivo de configuración: {known.config}")
+        try:
+            config_data = json.loads(known.config.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            p.error(f"Configuración JSON no válida: {exc}")
+        if not isinstance(config_data, dict):
+            p.error("La configuración debe ser un objeto JSON.")
+        allowed = {"model_path","dataset_dir","output_dir","max_seq_length","rank","epochs",
+                   "batch_size","grad_accumulation","learning_rate","load_in_4bit","offline"}
+        unknown = set(config_data) - allowed
+        if unknown:
+            p.error("Claves no reconocidas en config: " + ", ".join(sorted(unknown)))
+        p.set_defaults(**config_data)
     a = p.parse_args()
+    if not a.model_path or not a.dataset_dir or not a.output_dir:
+        p.error("Indica --model-path, --dataset-dir y --output-dir, o configúralos en --config.")
+    a.dataset_dir = Path(a.dataset_dir)
+    a.output_dir = Path(a.output_dir)
     model_path = Path(a.model_path).expanduser()
     if not model_path.is_dir():
         p.error(f"El modelo debe existir como carpeta local: {model_path}")

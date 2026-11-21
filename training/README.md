@@ -41,7 +41,14 @@ python training/prepare_dataset.py --input training/datasets/raw.jsonl --output-
 python training/train_unsloth.py --model-path /ruta/al/modelo-local --dataset-dir training/datasets/prepared --output-dir training/checkpoints/karen-lora --offline
 ```
 
-5. Evalúa manualmente el adaptador y compáralo con el modelo base usando preguntas reservadas en el conjunto test. No uses los ejemplos de test para entrenar.
+5. Genera respuestas sobre el conjunto reservado para revisarlas:
+
+```bash
+python training/evaluate_model.py --model-path /ruta/al/modelo-base --test training/datasets/prepared/test.jsonl --output training/evaluation/base.jsonl
+python training/evaluate_model.py --model-path /ruta/al/modelo-base --adapter training/checkpoints/karen-lora/adapter --test training/datasets/prepared/test.jsonl --output training/evaluation/adapted.jsonl
+```
+
+Compara ambos informes manualmente. No uses los ejemplos de test para entrenar.
 
 ## Seguridad y honestidad
 

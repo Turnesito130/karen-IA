@@ -13,7 +13,7 @@ function normalize(value){
 function parseRelation(value){
   const text=String(value||"").toLocaleLowerCase("es").normalize("NFD")
     .replace(/[\u0300-\u036f]/g,"").replace(/[¿¡?!.]/g," ").replace(/\s+/g," ").trim();
-  const match=text.match(/^(?:(?:todos|todas)\s+)?(?:(?:los|las|un|una|unos|unas|el|la)\s+)?(.+?)\s+(no\s+)?(?:es|son)\s+(?:(?:un|una|unos|unas|el|la|los|las)\s+)?(.+)$/);
+  const match=text.match(/^(?:(?:todos|todas)\s+)?(?:(?:los|las|un|una|unos|unas|el|la)\s+)?(.+?)\s+(no\s+)?(?:es|son)\s+(.+)$/);
   if(!match)return null;
   const from=normalize(match[1]),to=normalize(match[4]);
   return from&&to&&from!==to?{from,to,negated:!!match[2]}:null;

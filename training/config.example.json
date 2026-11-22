@@ -9,5 +9,6 @@
   "grad_accumulation": 4,
   "learning_rate": 0.0002,
   "load_in_4bit": true,
-  "offline": true
+  "offline": true,
+  "base_model_id": "unsloth/SmolLM3-3B"
 }

@@ -5,6 +5,7 @@ import argparse, hashlib, inspect, json, os, subprocess, sys
 from importlib import metadata
 from pathlib import Path
 from datetime import datetime, timezone
+from karen_prompt import KAREN_SYSTEM_PROMPT
 
 def supported_kwargs(callable_obj, values, allow_var_kwargs=True):
     sig = inspect.signature(callable_obj)
@@ -88,7 +89,7 @@ def main():
     def render(row):
         user = row["instruction"]
         if row.get("input"): user += "\n\nContexto:\n"+row["input"]
-        messages=[{"role":"user","content":user},{"role":"assistant","content":row["output"]}]
+        messages=[{"role":"system","content":KAREN_SYSTEM_PROMPT},{"role":"user","content":user},{"role":"assistant","content":row["output"]}]
         return {"text":tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=False)}
     data=data.map(render)
     a.output_dir.mkdir(parents=True,exist_ok=True)

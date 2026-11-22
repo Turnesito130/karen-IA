@@ -4,14 +4,14 @@
  */
 function maskCommentsAndStrings(source){
   const chars=[...source],out=[...source];
-  let i=0,state="code";
+  let i=0,state="code",quoteChar=null;
   const blank=(at)=>{if(out[at]!=="\n"&&out[at]!=="\r")out[at]=" ";};
   while(i<chars.length){
     const ch=chars[i],next=chars[i+1];
     if(state==="code"){
       if(ch==="/"&&next==="/"){blank(i);blank(i+1);i+=2;state="line-comment";continue;}
       if(ch==="/"&&next==="*"){blank(i);blank(i+1);i+=2;state="block-comment";continue;}
-      if(ch==="'"||ch==='"'||ch===String.fromCharCode(96)){const quote=ch;blank(i);i++;state=quote===String.fromCharCode(96)?"template":"string";continue;}
+      if(ch==="'"||ch==='"'||ch===String.fromCharCode(96)){quoteChar=ch;blank(i);i++;state=quoteChar===String.fromCharCode(96)?"template":"string";continue;}
       i++;continue;
     }
     if(state==="line-comment"){
@@ -23,9 +23,8 @@ function maskCommentsAndStrings(source){
       blank(i);i++;continue;
     }
     if(state==="string"||state==="template"){
-      const quote=state==="string"?null:String.fromCharCode(96);
       if(ch==="\\"){blank(i);if(i+1<chars.length)blank(i+1);i+=2;continue;}
-      if((state==="string"&&(ch==="'"||ch==='"'))||(state==="template"&&ch===quote)){blank(i);i++;state="code";continue;}
+      if(ch===quoteChar){blank(i);i++;state="code";quoteChar=null;continue;}
       blank(i);i++;continue;
     }
   }

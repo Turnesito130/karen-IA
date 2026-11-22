@@ -8,6 +8,11 @@ test("Chromebook file bundle loads current memory, knowledge, autonomy and revie
  vm.runInNewContext(source,sandbox,{timeout:2000});
  const modules=sandbox.window.EDModules;
  assert.equal(typeof modules.import,"function");
+ const syncModule=await modules.import("./neural-core/memory-sync.mjs");
+ const transportModule=await modules.import("./neural-core/memory-sync-transport.mjs");
+ assert.equal(typeof syncModule.createMemorySync,"function");
+ assert.equal(typeof transportModule.createEncryptedMemoryTransport,"function");
+
  const {createEDOpenJarvisAdapter}=await modules.import("./neural-core/openjarvis-adapter.mjs");
  const backendData=new Map();
  const storage={getItem:key=>backendData.has(key)?backendData.get(key):null,setItem:(key,value)=>backendData.set(key,String(value)),removeItem:key=>backendData.delete(key)};

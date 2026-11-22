@@ -1,6 +1,6 @@
 /**
  * Karen · OpenJarvis-inspired local architecture adapter.
- * Maps Intelligence, Engine, Agent, Memory and Learning primitives to E.D.'s
+ * Maps Intelligence, Engine, Agent, Memory and Learning primitives to Karen's
  * native JavaScript cognition. No Python runtime, model weights, CDN or AI API.
  * Traces intentionally store metadata only, never prompts or private answers.
  */

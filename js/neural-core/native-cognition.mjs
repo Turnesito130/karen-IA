@@ -9,7 +9,7 @@ function score(q,t){const a=words(q).filter(x=>!STOP.has(x));if(!a.length)return
 function latest(ms){for(let i=ms.length-1;i>=0;i--)if(ms[i]?.role==="user"&&typeof ms[i].content==="string")return ms[i].content.trim();return ""}
 function sys(ms){return ms.filter(x=>x?.role==="system").map(x=>x.content||"").join("\n")}
 function docs(s){const i=s.indexOf("CONOCIMIENTO LOCAL RECUPERADO");if(i<0)return [];return s.slice(i).split(/\n\[Fuente /).slice(1).map(b=>{const l=b.split("\n");return {source:l[0].replace(/\].*$/,"").trim(),text:l.slice(1).join(" ").trim()}}).filter(x=>x.text)}
-function memoryDocs(s){return String(s||"").split(/\r?\n/).map(line=>{const m=line.match(/^\s*-\s*\[([^\]]+)\]\s*(.+)$/);return m?{source:m[1].trim(),text:m[2].trim()}:null}).filter(Boolean)}
+function memoryDocs(s){return String(s||"").replace(/\\n/g,"\n").split(/\r?\n/).map(line=>{const m=line.match(/^\s*-\s*\[([^\]]+)\]\s*(.+)$/);return m?{source:m[1].trim(),text:m[2].trim()}:null}).filter(Boolean)}
 
 export function createNativeCognition({storage=null}={}){
  const target=storageOf(storage);let ready=false;

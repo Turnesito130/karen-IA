@@ -2,6 +2,12 @@
 
 Este flujo es para fine-tuning supervisado de un modelo base con Unsloth/LoRA. Kaggle proporciona cómputo remoto sujeto a disponibilidad, cuotas, reglas y cambios del proveedor. No se garantiza una GPU concreta ni sesiones ilimitadas.
 
+## Notebook preparado
+
+El repositorio incluye `training/kaggle/karen-training.ipynb`. Ábrelo en Kaggle, activa una GPU y adjunta como Dataset privado un único `raw.jsonl` con ejemplos revisados y `approved: true`. El notebook clona la rama de Karen, instala y diagnostica el entorno, audita los datos, descarga el candidato `unsloth/SmolLM3-3B`, prepara los splits, ejecuta QLoRA y genera evaluaciones base/adaptada. Se detiene si no hay GPU o si la auditoría detecta problemas.
+
+El candidato es provisional: 3B, Apache 2.0 y soporte declarado de español. Revisa `training/models/README.md` y la ficha https://huggingface.co/unsloth/SmolLM3-3B. El notebook no garantiza que cualquier GPU gratuita tenga VRAM suficiente.
+
 ## Preparar el Notebook
 1. Abre https://www.kaggle.com/code y crea un Notebook nuevo.
 2. En Settings, activa un acelerador GPU si tu cuenta y cuota lo permiten.

@@ -20,10 +20,29 @@ test("deduplicates, supports correction and explicit deletion",()=>{
  assert.equal(store.forget(first.id),true);
  assert.equal(store.list().length,0);
 });
+test("detects conflicting preferences and requires explicit resolution",()=>{
+ const store=createMemoryStore({storage:storage()});
+ const old=store.remember({content:"Prefiero respuestas breves",type:"preference",consent:true});
+ const newer=store.remember({content:"Prefiero respuestas largas",type:"preference",consent:true});
+ assert.equal(newer.status,"uncertain");
+ assert.equal(newer.needsReview,true);
+ assert.equal(store.search("respuestas").some(x=>x.id===newer.id),false);
+ assert.equal(store.search("respuestas",{includeUncertain:true}).some(x=>x.id===newer.id),true);
+ assert.equal(store.resolveConflict(newer.id,[old.id]),true);
+ assert.equal(store.list().find(x=>x.id===old.id).status,"superseded");
+ assert.equal(store.list().some(x=>x.id===newer.id),true);
+});
+test("migrates old E.D. memory and reports storage persistence honestly",()=>{
+ const backend=storage();
+ backend.setItem("ed_structured_memory_v1",JSON.stringify([{id:"old-1",content:"Dato antiguo",type:"fact",status:"active"}]));
+ const store=createMemoryStore({storage:backend});
+ assert.equal(store.list({status:"all"}).some(x=>x.id==="old-1"),true);
+ assert.equal(store.health().persistent,false);
+});
 test("import requires consent, rejects oversized payloads and clear requires consent",()=>{
  const store=createMemoryStore({storage:storage()});
  assert.throws(()=>store.clear(),/confirmación/);
- assert.throws(()=>store.importJSON({format:"ed2-structured-memory",version:1,memories:[]}),/confirmación/);
- assert.throws(()=>store.importJSON({format:"ed2-structured-memory",version:1,memories:Array(1001).fill({})},{consent:true}),/1000/);
+ assert.throws(()=>store.importJSON({format:"karen-structured-memory",version:2,memories:[]}),/confirmación/);
+ assert.throws(()=>store.importJSON({format:"karen-structured-memory",version:2,memories:Array(1001).fill({})},{consent:true}),/1000/);
  assert.deepEqual(store.health().available,true);
 });

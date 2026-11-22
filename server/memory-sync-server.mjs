@@ -58,8 +58,9 @@ function validateCipher(value) {
 async function readVault(dataFile) {
   try {
     const parsed=JSON.parse(await readFile(dataFile,"utf8"));
-    if (!parsed || typeof parsed.revision!=="string" || !validateCipher(parsed.envelope)) {
-      throw new Error("El almacén existente no tiene un formato válido; no se sobrescribirá.");
+    if (!parsed || typeof parsed.revision!=="string" || !validateCipher(parsed.envelope)
+      || parsed.revision!==revisionFor(parsed.envelope)) {
+      throw new Error("El almacén existente no tiene un formato válido o su revisión no coincide; no se sobrescribirá.");
     }
     return parsed;
   } catch(error) {

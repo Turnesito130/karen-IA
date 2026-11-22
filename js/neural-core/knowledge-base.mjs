@@ -10,7 +10,11 @@ const SYNONYMS = Object.freeze({
   "coche":["automovil","vehiculo"], "vehiculo":["coche","automovil"],
   "dinero":["moneda","economia","finanzas"], "planeta":["mundo","astro"],
   "medico":["medicina","salud"], "programar":["programacion","codigo"],
-  "javascript":["js","programacion"], "internet":["web","red"]
+  "javascript":["js","programacion"], "internet":["web","red"],
+  "wifi":["inalambrico","red"], "bombilla":["luz","lampara"],
+  "aprendizaje":["estudio","formacion"], "seguridad":["proteccion","ciberseguridad"],
+  "memoria":["recuerdo","almacenamiento"], "energia":["electricidad","potencia"],
+  "entrenamiento":["ajuste","fine-tuning"]
 });
 function tokens(value) {
   return String(value || "").toLocaleLowerCase("es").normalize("NFD")

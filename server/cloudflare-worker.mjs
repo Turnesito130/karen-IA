@@ -1,12 +1,13 @@
 const MAX_BODY = 4_500_000;
 
 function json(value,status=200,headers={}) {
-  return new Response(JSON.stringify(value),{status,headers:{
+  const responseHeaders=new Headers({
     "Content-Type":"application/json; charset=utf-8",
     "Cache-Control":"no-store",
-    "X-Content-Type-Options":"nosniff",
-    ...headers
-  }});
+    "X-Content-Type-Options":"nosniff"
+  });
+  for(const [key,val] of new Headers(headers))responseHeaders.set(key,val);
+  return new Response(JSON.stringify(value),{status,headers:responseHeaders});
 }
 function cors(request,env,headers) {
   const origin=request.headers.get("Origin");

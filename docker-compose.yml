@@ -1,0 +1,16 @@
+services:
+  karen-memory-vault:
+    build: .
+    container_name: karen-memory-vault
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      KAREN_SYNC_FILE: /data/memory-vault.json
+      PORT: "8787"
+      HOST: "0.0.0.0"
+    volumes:
+      - ./karen-data:/data
+    # Solo escucha en localhost: coloca un proxy HTTPS delante.
+    ports:
+      - "127.0.0.1:8787:8787"

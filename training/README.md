@@ -145,7 +145,7 @@ Esto clona nanoGPT en `external/nanoGPT` y ejecuta una configuración diminuta e
 
 ## Entrenamiento remoto con GPU en Kaggle
 
-Consulta `training/kaggle/README.md` para crear el Notebook, preparar el entorno, ejecutar el diagnóstico y lanzar el fine-tuning Unsloth. La GPU y el tiempo de sesión dependen de la disponibilidad y cuotas de Kaggle. Los datos enviados a Kaggle se procesan en infraestructura de terceros: no subas datos sensibles ni secretos.
+Abre `training/kaggle/karen-training.ipynb` en Kaggle. El Notebook ya automatiza clonación de la rama, diagnóstico GPU, auditoría y preparación de datos, descarga del candidato provisional `unsloth/SmolLM3-3B`, fine-tuning QLoRA y evaluación base/adaptada. Revisa `training/models/README.md` antes de aceptar el candidato. La GPU y el tiempo de sesión dependen de la disponibilidad y cuotas de Kaggle. Los datos enviados a Kaggle se procesan en infraestructura de terceros: no subas datos sensibles ni secretos. El Notebook se detiene si no hay GPU o datos aprobados suficientes.
 
 ## Ejemplos iniciales
 

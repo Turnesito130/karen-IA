@@ -38,8 +38,8 @@ async function deriveKey(cryptoImpl, passphrase, salt) {
 export function createEncryptedMemoryTransport({
   baseUrl, accessToken, passphrase, fetchImpl=globalThis.fetch, cryptoImpl=globalThis.crypto
 } = {}) {
-  if (typeof baseUrl !== "string" || !/^https:\/\/[^/]+(?:\/.*)?$/i.test(baseUrl) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(?:\/.*)?$/i.test(baseUrl)) {
-    throw new TypeError("El servidor de sincronización debe usar HTTPS (HTTP solo se permite en localhost).");
+  if (typeof baseUrl !== "string" || !/^https:\/\/[^/]+(?:\/)?$/i.test(baseUrl) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(?:\/)?$/i.test(baseUrl)) {
+    throw new TypeError("Indica solo el dominio HTTPS del servidor (HTTP se permite únicamente en localhost).");
   }
   if (typeof accessToken !== "string" || accessToken.length < 32 || accessToken.length > 4096) {
     throw new TypeError("El token de acceso debe tener al menos 32 caracteres.");

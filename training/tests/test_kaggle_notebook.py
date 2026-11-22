@@ -25,6 +25,8 @@ class KaggleNotebookTests(unittest.TestCase):
             "training/evaluate_model.py",
             "approved_count < 10",
             "snapshot_download",
+            "FastLanguageModel.for_inference",
+            "max_new_tokens=40",
             "unsloth/SmolLM3-3B",
             "--base-model-id",
             "--offline",

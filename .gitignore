@@ -1,0 +1,18 @@
+# Secretos locales
+.env
+.env.*
+!.env.example
+
+# Datos privados de la bóveda
+.karen/
+karen-data/
+data/memory-vault.json
+
+# Datos y artefactos de entrenamiento
+training/datasets/raw.jsonl
+training/datasets/prepared/
+training/datasets/audit*.json
+training/checkpoints/
+training/evaluation/*.jsonl
+training/exports/
+training/registry/versions.json

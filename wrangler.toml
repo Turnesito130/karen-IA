@@ -1,0 +1,11 @@
+name = "karen-memory-vault"
+main = "server/cloudflare-worker.mjs"
+compatibility_date = "2026-11-22"
+
+[vars]
+KAREN_SYNC_ORIGIN = "https://turnesito130.github.io"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "karen-memory-vault"
+database_id = "REEMPLAZA_CON_EL_ID_DE_TU_BASE_D1"

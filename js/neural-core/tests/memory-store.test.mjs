@@ -29,7 +29,7 @@ test("detects conflicting preferences and requires explicit resolution",()=>{
  assert.equal(store.search("respuestas").some(x=>x.id===newer.id),false);
  assert.equal(store.search("respuestas",{includeUncertain:true}).some(x=>x.id===newer.id),true);
  assert.equal(store.resolveConflict(newer.id,[old.id]),true);
- assert.equal(store.list().find(x=>x.id===old.id).status,"superseded");
+ assert.equal(store.list({status:"all"}).find(x=>x.id===old.id).status,"superseded");
  assert.equal(store.list().some(x=>x.id===newer.id),true);
 });
 test("migrates old E.D. memory and reports storage persistence honestly",()=>{

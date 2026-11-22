@@ -135,7 +135,6 @@ export function createMemoryStore({ storage, key = DEFAULT_KEY, now = () => new 
   }
   function health() {
     try {
-      const before = backend.getItem(key);
       const marker = "__ed_memory_probe__";
       backend.setItem(key + ":probe", marker);
       const ok = backend.getItem(key + ":probe") === marker;
@@ -156,13 +155,21 @@ export function createMemoryStore({ storage, key = DEFAULT_KEY, now = () => new 
     }
     const current = read();
     const known = new Set(current.map(item => item.id));
-    const incoming = parsed.memories.filter(item =>
-      item && typeof item.id === "string" && typeof item.content === "string" &&
-      TYPES.has(item.type) && typeof item.source === "string" &&
-      Number.isFinite(item.confidence) && STATUSES.has(item.status) &&
-      typeof item.createdAt === "string" && !known.has(item.id)
-    );
-    write([...current, ...incoming]);
+    if (parsed.memories.length > 1000) throw new RangeError("La copia supera el máximo de 1000 recuerdos.");
+    const incoming = [];
+    const seen = new Set(known);
+    for (const item of parsed.memories) {
+      if (!item || typeof item.id !== "string" || item.id.length > 100 ||
+          typeof item.content !== "string" || !item.content.trim() || item.content.length > 1200 ||
+          !TYPES.has(item.type) || typeof item.source !== "string" || item.source.length > 160 ||
+          !Number.isFinite(item.confidence) || item.confidence < 0 || item.confidence > 1 ||
+          !STATUSES.has(item.status) || typeof item.createdAt !== "string" ||
+          typeof item.updatedAt !== "string" || seen.has(item.id)) continue;
+      seen.add(item.id);
+      incoming.push({ id:item.id, content:item.content.trim(), type:item.type, source:item.source,
+        confidence:item.confidence, status:item.status, createdAt:item.createdAt, updatedAt:item.updatedAt });
+    }
+    write([...current, ...incoming].slice(-1000));
     return incoming.length;
   }
   return Object.freeze({ remember, search, update, forget, forgetMatching, clear, list, context, health, exportJSON, importJSON });

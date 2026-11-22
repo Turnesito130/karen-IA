@@ -21,6 +21,10 @@
   $id("karenSyncPreview").addEventListener("click",async()=>{
     const button=$id("karenSyncPreview");button.disabled=true;pending=null;$id("karenSyncRun").disabled=true;
     const url=$id("karenSyncUrl").value.trim(),accessToken=$id("karenSyncToken").value,secret=$id("karenSyncPassphrase").value;
+    if(location.protocol!=="https:"&&location.hostname!=="localhost"&&location.hostname!=="127.0.0.1"){
+      clearSecrets();status("Para sincronizar entre dispositivos, abre Karen desde una dirección HTTPS. El modo de archivo local no puede conectarse al servidor.");
+      button.disabled=false;return;
+    }
     try{
       const [transportModule,syncModule]=await Promise.all([
         EDModules.import("./neural-core/memory-sync-transport.mjs"),

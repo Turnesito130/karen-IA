@@ -26,6 +26,7 @@ class KaggleNotebookTests(unittest.TestCase):
             "approved_count < 10",
             "snapshot_download",
             "unsloth/SmolLM3-3B",
+            "--base-model-id",
             "--offline",
         ):
             self.assertIn(required, source)

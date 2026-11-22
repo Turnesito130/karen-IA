@@ -12,11 +12,15 @@ function normalize(value){
 }
 function parseRelation(value){
   const text=String(value||"").toLocaleLowerCase("es").normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"").replace(/[¿¡?!.]/g," ").replace(/\s+/g," ").trim();
-  const match=text.match(/^(?:(?:todos|todas)\s+)?(?:(?:los|las|un|una|unos|unas|el|la)\s+)?(.+?)\s+(no\s+)?(?:es|son)\s+(.+)$/);
-  if(!match)return null;
-  const from=normalize(match[1]),to=normalize(match[4]);
-  return from&&to&&from!==to?{from,to,negated:!!match[2]}:null;
+    .replace(/[\u0300-\u036f]/g,"").replace(/[¿¡?!.]/g," ").replace(/[^a-z0-9\s-]/g," ")
+    .replace(/\s+/g," ").trim();
+  const parts=text.split(" ");
+  const copula=parts.findIndex((word,index)=>index>0&&index<parts.length-1&&(word==="es"||word==="son"));
+  if(copula<1||copula>=parts.length-1)return null;
+  const negated=parts[copula-1]==="no";
+  const from=normalize(parts.slice(0,negated?copula-1:copula).join(" "));
+  const to=normalize(parts.slice(copula+1).join(" "));
+  return from&&to&&from!==to?{from,to,negated}:null;
 }
 export function inferRelation({facts=[],query,maxDepth=6}={}){
   if(!Array.isArray(facts)||typeof query!=="string")throw new TypeError("facts y query no válidos");

@@ -13,6 +13,7 @@ on:
       - arquitectura/cerebro-propio-0.1
     paths:
       - "training/**"
+      - "js/neural-core/**"
       - ".github/workflows/karen-training-tests.yml"
 
 jobs:

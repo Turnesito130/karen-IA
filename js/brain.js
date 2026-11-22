@@ -5,8 +5,6 @@ let edLocalModelReady = false;
 let edLocalModelLoading = false;
 let edLocalModelError = "";
 let edMemoryStorePromise = null;
-let edMemoryContextModule = null;
-let edKnowledgeBasePromise = null;
 let edTutorMode = false;
 
 function setEDTutorMode(enabled) {
@@ -26,27 +24,6 @@ async function getStructuredMemory() {
   edMemoryStorePromise ||= EDModules.import("./neural-core/memory-store.mjs")
     .then(({ createMemoryStore }) => createMemoryStore());
   return edMemoryStorePromise;
-}
-async function getMemoryAwarePrompt(text) {
-  try {
-    const memory = await getStructuredMemory();
-    edMemoryContextModule ||= await EDModules.import("./neural-core/memory-context.mjs");
-    return edMemoryContextModule.buildMemoryContext(text, memory);
-  } catch (error) {
-    console.warn("Karen memory context unavailable:", error);
-    return "";
-  }
-}
-async function getKnowledgeContext(text) {
-  try {
-    edKnowledgeBasePromise ||= EDModules.import("./neural-core/curated-knowledge.mjs")
-      .then(({ createCuratedKnowledgeBase }) => createCuratedKnowledgeBase());
-    const knowledge = await edKnowledgeBasePromise;
-    return knowledge.buildContext(text, { limit: 4, maxChars: 2600, minScore: 0.08 });
-  } catch (error) {
-    console.warn("Karen local knowledge unavailable:", error);
-    return { context: "", sources: [] };
-  }
 }
 function refreshEDArchitectureStats() {
   const target = document.getElementById("edArchitectureStats");

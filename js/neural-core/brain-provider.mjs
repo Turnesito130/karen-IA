@@ -7,7 +7,7 @@ export function createLocalBrainProvider({cognition=null,storage=null}={}){
  const brain=cognition||createNativeCognition({storage});
  const neural=createLocalTransformerBrain({storage});
  let ready=false,loading=null;
- return Object.freeze({id:"ed-native-cognition+ed-transformer",get ready(){return ready},
+ return Object.freeze({id:"karen-native-cognition+local-transformer",get ready(){return ready},
  async checkSupport(){return {supported:true,reason:"El núcleo simbólico y el Transformer propio funcionan en JavaScript/WebAssembly CPU; no requieren WebGPU ni servicios de IA externos."}},
  async load(onProgress=()=>{}){if(ready)return true;if(loading)return loading;loading=Promise.resolve().then(async()=>{onProgress({text:"Preparando el cerebro cognitivo propio…",progress:.25});await brain.load();onProgress({text:"Buscando un cerebro neuronal entrenado en este dispositivo…",progress:.55});await neural.load();ready=true;onProgress({text:neural.ready?"Cerebro propio y pesos neuronales locales cargados.":"Cerebro simbólico propio activo; el Transformer todavía no está entrenado.",progress:1});return true});try{return await loading}finally{loading=null}},
  async generate(ms){if(!ready)throw new Error("El cerebro propio todavía no está activado.");const answer=await brain.generate(ms);if(/^Todavía no tengo conocimientos suficientes/i.test(answer)&&neural.ready){const proposal=neural.generate(lastUser(ms));if(proposal&&readableProposal(proposal))return "Mi Transformer propio propone esta respuesta experimental (todavía no verificada):\n"+proposal;}return answer},

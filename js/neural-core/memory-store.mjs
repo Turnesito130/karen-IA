@@ -25,15 +25,23 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
   let backend=storage;
   try{if(!backend)backend=globalThis.localStorage||null}catch{backend=null}
   if(!backend||typeof backend.getItem!=="function"||typeof backend.setItem!=="function")throw new TypeError("Se necesita un almacenamiento compatible con localStorage.");
+  let corrupt=false;
   function read(){
     try{
       let raw=backend.getItem(key);
       if(!raw){const legacy=backend.getItem("ed_structured_memory_v1");if(legacy){raw=legacy;backend.setItem(key,legacy);}}
       const parsed=JSON.parse(raw||"[]");
-      return Array.isArray(parsed)?parsed.filter(item=>item&&typeof item.id==="string"&&typeof item.content==="string"&&TYPES.has(item.type)&&STATUSES.has(item.status)):[];
-    }catch{return []}
+      if(!Array.isArray(parsed))throw new TypeError("El formato almacenado no es una lista.");
+      return parsed.filter(item=>item&&typeof item.id==="string"&&typeof item.content==="string"&&TYPES.has(item.type)&&STATUSES.has(item.status));
+    }catch(error){
+      corrupt=true;
+      throw new Error("La memoria local no se puede leer. No se sobrescribirá para evitar pérdida de datos: "+String(error?.message||error));
+    }
   }
-  function write(items){backend.setItem(key,JSON.stringify(items.slice(-1000)))}
+  function write(items){
+    if(corrupt)throw new Error("La memoria está marcada como dañada; exporta o revisa el almacenamiento antes de modificarla.");
+    backend.setItem(key,JSON.stringify(items.slice(-1000)));
+  }
   function similarity(a,b){
     const left=new Set(tokens(a)),right=new Set(tokens(b));
     if(!left.size||!right.size)return 0;
@@ -118,6 +126,7 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
   }
   function clear({consent=false}={}){
     if(consent!==true)throw new Error("Borrar toda la memoria requiere confirmación explícita.");
+    if(corrupt){backend.setItem(key,"[]");corrupt=false;return 0;}
     const count=read().length;write([]);return count;
   }
   function health(){
@@ -125,8 +134,9 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
       const marker="__karen_memory_probe__";backend.setItem(key+":probe",marker);
       const available=backend.getItem(key+":probe")===marker;backend.removeItem(key+":probe");
       let nativeStorage=false;try{nativeStorage=typeof globalThis.localStorage!=="undefined"&&backend===globalThis.localStorage}catch{}
-      return {available,count:read().length,limit:1000,persistent:nativeStorage,storage:nativeStorage?"browser-local-storage":"custom-or-ephemeral"};
-    }catch{return {available:false,count:read().length,limit:1000,persistent:false,storage:"unavailable"}}
+      const count=read().length;
+      return {available,corrupt:false,count,limit:1000,persistent:nativeStorage,storage:nativeStorage?"browser-local-storage":"custom-or-ephemeral"};
+    }catch{return {available:false,corrupt,persistent:false,count:null,limit:1000,storage:"unavailable"}}
   }
   function exportJSON(){return JSON.stringify({format:"karen-structured-memory",version:2,memories:read()},null,2)}
   function importJSON(input,{consent=false}={}){

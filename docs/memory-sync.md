@@ -2,7 +2,7 @@
 
 ## Estado real
 
-El protocolo de combinación, el transporte cifrado y un servidor Node autoalojable están implementados y tienen pruebas automatizadas. **Todavía no hay un servidor desplegado ni sincronización activa entre los dispositivos.** La aplicación web aún no muestra el formulario para conectar el servidor; esta base técnica no se debe confundir con una función ya disponible para el usuario.
+El protocolo de combinación, el transporte cifrado y un servidor Node autoalojable están implementados y tienen pruebas automatizadas. **Todavía no hay un servidor desplegado ni sincronización activa entre los dispositivos.** La interfaz para conectar el servidor ya está añadida a los ajustes de Karen; solo funcionará cuando exista un servidor accesible y el usuario introduzca su URL, token y frase secreta.
 
 ## Arquitectura
 
@@ -68,3 +68,7 @@ Ambas funciones están exportadas desde `js/neural-core/index.js`.
 ## Pruebas
 
 `tests/memory-sync.test.mjs` cubre combinación, conflictos y concurrencia. `tests/memory-sync-transport.test.mjs` verifica cifrado y rechazo de frases incorrectas. `tests/memory-sync-server.test.mjs` verifica autenticación, control de origen, ciphertext obligatorio y compare-and-swap.
+
+## Interfaz de Karen
+
+En Ajustes aparece el panel **Memoria privada entre dispositivos**. El botón de previsualización comprueba el servidor y calcula la combinación sin escribir. El botón de sincronización pide confirmación antes de guardar. El token y la frase se mantienen solo en memoria durante esa operación y los campos se vacían después. La dirección del servidor no se guarda automáticamente.

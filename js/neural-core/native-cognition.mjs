@@ -21,7 +21,7 @@ export function createNativeCognition({storage=null}={}){
  function recall(q,{limit=3,minScore=.5}={}){return read(target).map(x=>({...x,score:score(q,x.question+" "+x.answer)})).filter(x=>x.score>=minScore).sort((a,b)=>b.score-a.score).slice(0,Math.max(1,Math.min(10,limit)))}
  function forget(q){const all=read(target),n=norm(q),kept=all.filter(x=>!norm(x.question+" "+x.answer).includes(n));write(target,kept);return all.length-kept.length}
  function generate(ms){
-  const query=latest(ms);if(!query)return "No he recibido una pregunta.";const q=norm(query),system=sys(ms),tutor=system.includes("MODO PROFESOR ACTIVO");
+  const query=latest(ms);if(!query)return "No he recibido una pregunta.";const q=norm(query).replace(/[¿?¡!.,;:]/g,"").trim(),system=sys(ms),tutor=system.includes("MODO PROFESOR ACTIVO");
   const teach=query.match(/^aprende(?: que)?\s+(.+?)\s+(?:=>|significa|es)\s+(.+)$/i);
   if(teach)return learn(teach[1],teach[2]).saved?"He incorporado ese dato a mi memoria de aprendizaje local. Podré recuperarlo cuando me preguntes sobre «"+teach[1].trim()+"».":"He entendido el dato, pero no puedo guardarlo permanentemente en este navegador.";
   if(/^(que has aprendido|que sabes ahora|muestrame lo aprendido|lista lo aprendido)\??$/.test(q)){const a=read(target);return a.length?"He aprendido "+a.length+" datos:\n"+a.slice(-12).map(x=>"• "+x.question+": "+x.answer).join("\n"):"Todavía no me has enseñado datos. Usa «Aprende que [concepto] significa [explicación]»."}

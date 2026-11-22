@@ -2,7 +2,7 @@
  * Karen · revisión estática heurística de JavaScript.
  * No ejecuta código ni sustituye parser, pruebas, SAST completo o revisión humana.
  */
-function maskCommentsAndStrings(source){
+function maskCommentsAndStrings(source,{preserveStrings=false}={}){
   const chars=source.split(""),out=source.split("");
   let i=0,state="code",quoteChar=null;
   const blank=(at)=>{if(out[at]!=="\n"&&out[at]!=="\r")out[at]=" ";};
@@ -11,7 +11,7 @@ function maskCommentsAndStrings(source){
     if(state==="code"){
       if(ch==="/"&&next==="/"){blank(i);blank(i+1);i+=2;state="line-comment";continue;}
       if(ch==="/"&&next==="*"){blank(i);blank(i+1);i+=2;state="block-comment";continue;}
-      if(ch==="'"||ch==='"'||ch===String.fromCharCode(96)){quoteChar=ch;blank(i);i++;state=quoteChar===String.fromCharCode(96)?"template":"string";continue;}
+      if(ch==="'"||ch==='"'||ch===String.fromCharCode(96)){quoteChar=ch;if(!preserveStrings)blank(i);i++;state=quoteChar===String.fromCharCode(96)?"template":"string";continue;}
       i++;continue;
     }
     if(state==="line-comment"){
@@ -23,9 +23,9 @@ function maskCommentsAndStrings(source){
       blank(i);i++;continue;
     }
     if(state==="string"||state==="template"){
-      if(ch==="\\"){blank(i);if(i+1<chars.length)blank(i+1);i+=2;continue;}
-      if(ch===quoteChar){blank(i);i++;state="code";quoteChar=null;continue;}
-      blank(i);i++;continue;
+      if(ch==="\\"){if(!preserveStrings){blank(i);if(i+1<chars.length)blank(i+1);}i+=2;continue;}
+      if(ch===quoteChar){if(!preserveStrings)blank(i);i++;state="code";quoteChar=null;continue;}
+      if(!preserveStrings)blank(i);i++;continue;
     }
   }
   return out.join("");
@@ -40,10 +40,10 @@ const RULES=[
 export function reviewJavaScript(source,{maxChars=20000}={}){
   if(typeof source!=="string"||!source.trim())throw new TypeError("El código debe ser texto no vacío.");
   if(source.length>maxChars)throw new RangeError("El código supera el límite de revisión estática.");
-  const masked=maskCommentsAndStrings(source),findings=[];
+  const masked=maskCommentsAndStrings(source),commentMasked=maskCommentsAndStrings(source,{preserveStrings:true}),findings=[];
   for(const rule of RULES){
     rule.pattern.lastIndex=0;
-    for(const match of masked.matchAll(rule.pattern)){
+    for(const match of (rule.id==="string-timer"?commentMasked:masked).matchAll(rule.pattern)){
       const before=source.slice(0,match.index),line=before.split("\n").length;
       findings.push({rule:rule.id,severity:rule.severity,line,column:match.index-before.lastIndexOf("\n"),message:rule.message,suggestion:rule.suggestion});
     }

@@ -1,0 +1,21 @@
+{
+  "format": "karen-evaluation-summary-v1",
+  "reviewed_by_human": true,
+  "sample_count": 50,
+  "baseline": {
+    "accuracy": 1.2,
+    "honesty": 1.9,
+    "instruction_following": 1.6,
+    "safety": 2.0,
+    "clarity": 1.5,
+    "critical_errors": 0
+  },
+  "candidate": {
+    "accuracy": 1.4,
+    "honesty": 2.0,
+    "instruction_following": 1.7,
+    "safety": 2.0,
+    "clarity": 1.6,
+    "critical_errors": 0
+  }
+}

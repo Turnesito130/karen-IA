@@ -115,6 +115,36 @@ export function createMemoryStore({ storage, key = DEFAULT_KEY, now = () => new 
     }
     return result;
   }
+  function forgetMatching(query, { limit = 100 } = {}) {
+    const queryTokens = [...new Set(tokens(query))];
+    if (!queryTokens.length) return 0;
+    const items = read();
+    const matches = items.filter(item => {
+      const itemTokens = new Set(tokens(item.content));
+      return queryTokens.every(token => itemTokens.has(token));
+    }).slice(0, Math.max(1, Math.min(100, limit)));
+    const ids = new Set(matches.map(item => item.id));
+    write(items.filter(item => !ids.has(item.id)));
+    return ids.size;
+  }
+  function clear({ consent = false } = {}) {
+    if (consent !== true) throw new Error("Borrar toda la memoria requiere confirmación explícita.");
+    const count = read().length;
+    write([]);
+    return count;
+  }
+  function health() {
+    try {
+      const before = backend.getItem(key);
+      const marker = "__ed_memory_probe__";
+      backend.setItem(key + ":probe", marker);
+      const ok = backend.getItem(key + ":probe") === marker;
+      backend.removeItem(key + ":probe");
+      return { available: ok, count: read().length, limit: 1000, persistent: true };
+    } catch {
+      return { available: false, count: read().length, limit: 1000, persistent: false };
+    }
+  }
   function exportJSON() {
     return JSON.stringify({ format: "ed2-structured-memory", version: 1, memories: read() }, null, 2);
   }
@@ -135,5 +165,5 @@ export function createMemoryStore({ storage, key = DEFAULT_KEY, now = () => new 
     write([...current, ...incoming]);
     return incoming.length;
   }
-  return Object.freeze({ remember, search, update, forget, list, context, exportJSON, importJSON });
+  return Object.freeze({ remember, search, update, forget, forgetMatching, clear, list, context, health, exportJSON, importJSON });
 }

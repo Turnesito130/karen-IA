@@ -46,3 +46,15 @@ test("import requires consent, rejects oversized payloads and clear requires con
  assert.throws(()=>store.importJSON({format:"karen-structured-memory",version:2,memories:Array(1001).fill({})},{consent:true}),/1000/);
  assert.deepEqual(store.health().available,true);
 });
+
+test("does not silently overwrite corrupted memory",()=>{
+ const backend=storage();
+ backend.setItem("karen_structured_memory_v2","{broken-json");
+ const store=createMemoryStore({storage:backend});
+ assert.throws(()=>store.search("dato"),/no se puede leer/);
+ assert.equal(store.health().corrupt,true);
+ assert.throws(()=>store.remember({content:"nuevo dato",consent:true}),/no se puede leer/);
+ assert.equal(store.clear({consent:true}),0);
+ assert.equal(store.health().corrupt,false);
+ assert.deepEqual(store.list(),[]);
+});

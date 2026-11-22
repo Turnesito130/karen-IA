@@ -1,0 +1,30 @@
+name: Karen training toolkit tests
+
+on:
+  push:
+    branches:
+      - arquitectura/cerebro-propio-0.1
+    paths:
+      - "training/**"
+      - ".github/workflows/karen-training-tests.yml"
+  pull_request:
+    branches:
+      - arquitectura/cerebro-propio-0.1
+    paths:
+      - "training/**"
+      - ".github/workflows/karen-training-tests.yml"
+
+jobs:
+  training-toolkit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile training scripts
+        run: python -m compileall -q training
+      - name: Run unit tests (no GPU required)
+        run: python -m unittest discover -s training/tests -v

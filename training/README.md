@@ -75,7 +75,7 @@ También puedes copiar y editar `training/config.example.json` y ejecutar `pytho
 
 ## Revisión humana del dataset
 
-La herramienta `training/review_dataset.html` permite leer, editar, aprobar o rechazar cada ejemplo desde el navegador. No aprueba nada automáticamente, no modifica GitHub y guarda el progreso solo en el navegador. Al alcanzar al menos 10 aprobados, permite descargar un `karen-approved-training.jsonl` para adjuntarlo como Dataset privado en Kaggle.
+La herramienta [`training/review_dataset.html`](https://turnesito130.github.io/karen-IA/training/review_dataset.html) permite leer, editar, aprobar o rechazar cada ejemplo desde el navegador. No aprueba nada automáticamente, no modifica GitHub y guarda el progreso solo en el navegador. Al alcanzar al menos 10 aprobados, permite descargar un `karen-approved-training.jsonl` para adjuntarlo como Dataset privado en Kaggle.
 
 ## Instrucciones comunes y benchmark reservado
 

@@ -73,13 +73,24 @@ export function validatePlan(plan) {
 
 export function createAgentRuntime({ tools = {}, onAudit = () => {} } = {}) {
   const registry = new Map(Object.entries(tools).filter(([name, fn]) => /^[a-z][a-z0-9_]{0,40}$/.test(name) && typeof fn === "function"));
-  async function execute(plan, { approve = async () => false } = {}) {
+  async function execute(plan, { approve = async () => false, shouldStop = () => false, stopOnFailure = true, maxSteps = 12 } = {}) {
     if (!validatePlan(plan)) throw new TypeError("Plan no válido: se cancela la ejecución.");
+    if (!Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 12) throw new RangeError("maxSteps debe estar entre 1 y 12.");
+    if (typeof approve !== "function" || typeof shouldStop !== "function") throw new TypeError("approve y shouldStop deben ser funciones.");
+    if (plan.steps.length > maxSteps) throw new RangeError("El plan supera el límite de pasos permitido.");
     const results = [];
+    let halted = false;
     for (const item of plan.steps) {
+      if (shouldStop()) {
+        halted = true;
+        results.push({ id:item.id, status:"cancelled", message:"Ejecución detenida por la señal de cancelación." });
+        onAudit({ type:"workflow_cancelled", tool:item.tool, risk:item.risk });
+        break;
+      }
       if (!registry.has(item.tool)) {
         results.push({ id: item.id, status: "unavailable", message: "Herramienta no registrada." });
         onAudit({ type: "tool_unavailable", tool: item.tool, risk: item.risk });
+        if (stopOnFailure) { halted = true; break; }
         continue;
       }
       if (!AUTO_RISKS.has(item.risk)) {
@@ -87,6 +98,7 @@ export function createAgentRuntime({ tools = {}, onAudit = () => {} } = {}) {
         if (allowed !== true) {
           results.push({ id: item.id, status: "approval_required", message: "No se ejecutó: falta autorización explícita." });
           onAudit({ type: "approval_denied", tool: item.tool, risk: item.risk });
+          if (stopOnFailure) { halted = true; break; }
           continue;
         }
       }
@@ -97,9 +109,10 @@ export function createAgentRuntime({ tools = {}, onAudit = () => {} } = {}) {
       } catch (error) {
         results.push({ id: item.id, status: "failed", message: String(error?.message || error) });
         onAudit({ type: "tool_failed", tool: item.tool, risk: item.risk });
+        if (stopOnFailure) { halted = true; break; }
       }
     }
-    return Object.freeze({ planId: plan.id, results: Object.freeze(results) });
+    return Object.freeze({ planId: plan.id, halted, results: Object.freeze(results) });
   }
   return Object.freeze({ plan: planTask, execute, listTools: () => [...registry.keys()] });
 }

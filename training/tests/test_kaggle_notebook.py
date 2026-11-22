@@ -70,5 +70,14 @@ class KaggleNotebookTests(unittest.TestCase):
         self.assertIn('"role":"system","content":KAREN_SYSTEM_PROMPT', trainer)
         self.assertIn('"role": "system", "content": KAREN_SYSTEM_PROMPT', evaluator)
 
+    def test_review_tool_never_auto_approves_and_exports_only_human_approvals(self):
+        html = (ROOT / "training" / "review_dataset.html").read_text(encoding="utf-8")
+        self.assertIn('approved:row.approved===true', html)
+        self.assertIn('item.approved=status==="approved"', html)
+        self.assertIn('x.approved===true&&x.review_status==="approved"', html)
+        self.assertIn('approved<10', html)
+        self.assertNotIn("approve all", html.lower())
+        self.assertNotIn("fetch(\"", html.lower().replace("fetch(\"./datasets/", "fetch(\""))
+
 if __name__ == "__main__":
     unittest.main()

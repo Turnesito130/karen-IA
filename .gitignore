@@ -16,3 +16,9 @@ training/checkpoints/
 training/evaluation/*.jsonl
 training/exports/
 training/registry/versions.json
+
+# Herramientas y dependencias locales
+.dev.vars
+.wrangler/
+node_modules/
+dist/

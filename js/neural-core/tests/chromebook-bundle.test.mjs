@@ -13,6 +13,13 @@ test("Chromebook file bundle loads current memory, knowledge, autonomy and revie
  const storage={getItem:key=>backendData.has(key)?backendData.get(key):null,setItem:(key,value)=>backendData.set(key,String(value)),removeItem:key=>backendData.delete(key)};
  const adapter=createEDOpenJarvisAdapter({brain:{id:"bundle-test",ready:true,generate:async()=>"ok"},storage});
  assert.equal(adapter.knowledge.size>=40,true);
+ assert.equal(adapter.id,"karen-native-local-adapter");
+ const native=createEDOpenJarvisAdapter({storage});
+ await native.load();
+ const identity=await native.generate([{role:"user",content:"¿Quién eres?"}]);
+ assert.match(identity,/Soy Karen/);
+ assert.doesNotMatch(identity,/Soy E\\.D\\./);
+
  assert.equal(typeof adapter.memoryConflicts,"function");
  assert.equal(typeof adapter.resolveMemoryConflict,"function");
  assert.equal(typeof adapter.reviewJavaScript,"function");

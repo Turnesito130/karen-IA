@@ -23,6 +23,7 @@ class KaggleNotebookTests(unittest.TestCase):
             "training/prepare_dataset.py",
             "training/train_unsloth.py",
             "training/evaluate_model.py",
+            "karen-benchmark-v1.jsonl",
             "approved_count < 10",
             "snapshot_download",
             "FastLanguageModel.for_inference",
@@ -51,6 +52,23 @@ class KaggleNotebookTests(unittest.TestCase):
         self.assertGreaterEqual(len(rows), 10)
         self.assertTrue(all(row.get("approved") is False for row in rows))
 
+
+    def test_reserved_benchmark_is_separate_from_training_data(self):
+        path = ROOT / "training" / "evaluation" / "karen-benchmark-v1.jsonl"
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        self.assertGreaterEqual(len(rows), 20)
+        self.assertTrue(all(row.get("source", "").startswith("karen-benchmark-v1:") for row in rows))
+        self.assertTrue(all(isinstance(row.get("instruction"), str) and isinstance(row.get("output"), str) for row in rows))
+
+    def test_training_and_evaluation_share_karen_system_prompt(self):
+        prompt = (ROOT / "training" / "karen_prompt.py").read_text(encoding="utf-8")
+        trainer = (ROOT / "training" / "train_unsloth.py").read_text(encoding="utf-8")
+        evaluator = (ROOT / "training" / "evaluate_model.py").read_text(encoding="utf-8")
+        self.assertIn("No inventes datos", prompt)
+        self.assertIn("from karen_prompt import KAREN_SYSTEM_PROMPT", trainer)
+        self.assertIn("from karen_prompt import KAREN_SYSTEM_PROMPT", evaluator)
+        self.assertIn('"role":"system","content":KAREN_SYSTEM_PROMPT', trainer)
+        self.assertIn('"role": "system", "content": KAREN_SYSTEM_PROMPT', evaluator)
 
 if __name__ == "__main__":
     unittest.main()

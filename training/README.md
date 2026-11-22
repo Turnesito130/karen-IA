@@ -73,6 +73,10 @@ Empieza con una ejecución pequeña. Ajusta longitud, rango LoRA, épocas y batc
 
 También puedes copiar y editar `training/config.example.json` y ejecutar `python training/train_unsloth.py --config training/mi-config.json`. Los argumentos de la línea de comandos prevalecen sobre los valores del JSON.
 
+## Revisión humana del dataset
+
+La herramienta `training/review_dataset.html` permite leer, editar, aprobar o rechazar cada ejemplo desde el navegador. No aprueba nada automáticamente, no modifica GitHub y guarda el progreso solo en el navegador. Al alcanzar al menos 10 aprobados, permite descargar un `karen-approved-training.jsonl` para adjuntarlo como Dataset privado en Kaggle.
+
 ## Instrucciones comunes y benchmark reservado
 
 El prompt de sistema compartido está en `training/karen_prompt.py`; el entrenador y el evaluador usan exactamente las mismas instrucciones de identidad, honestidad y seguridad. El benchmark independiente `training/evaluation/karen-benchmark-v1.jsonl` contiene casos en español de razonamiento, matemáticas, incertidumbre, privacidad y acciones. No se incluye en los splits de entrenamiento. El Notebook genera respuestas base y adaptadas para ese benchmark y deben revisarse manualmente.

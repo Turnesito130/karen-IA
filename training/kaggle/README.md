@@ -2,6 +2,10 @@
 
 Este flujo es para fine-tuning supervisado de un modelo base con Unsloth/LoRA. Kaggle proporciona cómputo remoto sujeto a disponibilidad, cuotas, reglas y cambios del proveedor. No se garantiza una GPU concreta ni sesiones ilimitadas.
 
+## Antes de entrenar
+
+Revisa los ejemplos con la herramienta [Revisión del dataset](https://turnesito130.github.io/karen-IA/training/review_dataset.html). El exportador solo incluye ejemplos que hayas aprobado manualmente; los pendientes y rechazados nunca se envían al entrenador. Sube el archivo resultante como Dataset privado de Kaggle.
+
 ## Notebook preparado
 
 El repositorio incluye `training/kaggle/karen-training.ipynb`. Ábrelo en Kaggle, activa una GPU y adjunta como Dataset privado un único `raw.jsonl` con ejemplos revisados y `approved: true`. El notebook clona la rama de Karen, instala y diagnostica el entorno, audita los datos, descarga el candidato `unsloth/SmolLM3-3B`, prepara los splits, ejecuta QLoRA y genera evaluaciones base/adaptada. Se detiene si no hay GPU o si la auditoría detecta problemas.

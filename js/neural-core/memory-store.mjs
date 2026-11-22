@@ -64,6 +64,7 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
     const duplicate=items.find(item=>item.status!=="superseded"&&item.content.toLocaleLowerCase("es")===content.toLocaleLowerCase("es")&&item.type===type);
     if(duplicate){duplicate.updatedAt=now();duplicate.source=source;duplicate.confidence=confidence;write(items);return {...duplicate,duplicate:true,needsReview:duplicate.status==="uncertain"}}
     const conflicts=findConflicts(content,{type});
+    if(items.length>=1000)throw new RangeError("La memoria alcanzó su límite de 1000 recuerdos. Exporta o elimina recuerdos antes de guardar más.");
     const timestamp=now();
     const item={id:"karenmem-"+Math.random().toString(36).slice(2,12),content,type,source,confidence,status:conflicts.length?"uncertain":"active",createdAt:timestamp,updatedAt:timestamp};
     items.push(item);write(items);
@@ -150,7 +151,7 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
       if(!item||typeof item.id!=="string"||item.id.length>100||typeof item.content!=="string"||!item.content.trim()||item.content.length>1200||!TYPES.has(item.type)||typeof item.source!=="string"||item.source.length>160||!Number.isFinite(item.confidence)||item.confidence<0||item.confidence>1||!STATUSES.has(item.status)||typeof item.createdAt!=="string"||typeof item.updatedAt!=="string"||seen.has(item.id))continue;
       seen.add(item.id);incoming.push({id:item.id,content:item.content.trim(),type:item.type,source:item.source,confidence:item.confidence,status:item.status,createdAt:item.createdAt,updatedAt:item.updatedAt});
     }
-    write([...current,...incoming].slice(-1000));return incoming.length;
+    if(current.length+incoming.length>1000)throw new RangeError("La importación superaría los 1000 recuerdos. Exporta o elimina recuerdos antes de importar.");\n    write([...current,...incoming]);return incoming.length;
   }
   return Object.freeze({remember,search,findConflicts,resolveConflict,update,forget,forgetMatching,clear,list,context,health,exportJSON,importJSON});
 }

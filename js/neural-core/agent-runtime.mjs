@@ -53,25 +53,30 @@ export function classifyRisk(tool) {
   return RISK.MEDIUM;
 }
 export function planTask(input) {
-  const query = cleanText(input, 1000);
-  const q = query.toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const steps = [];
-  const add = (tool, args, description) => steps.push(step("step-" + (steps.length + 1), tool, args, classifyRisk(tool), description));
-  let match = q.match(/(?:cuanto es|calcula|calcular|resuelve)\s+(.+)/);
-  if (match) add("calculate", { expression:match[1].replace(/[?¿]/g,"").trim() }, "Calcular la expresión solicitada");
-  match = q.match(/^(?:que recuerdas de|que sabes de|busca en mi memoria)\s+(.+)/);
-  if (match) add("memory_search", { query:match[1].trim() }, "Consultar recuerdos relevantes");
-  match = q.match(/^(?:anota|apunta|recuerda|memoriza)(?: que)?\s+(.+)/);
-  if (match) add("note", { text:match[1].trim() }, "Guardar la nota solicitada expresamente");
-  match = q.match(/^(?:busca en google|busca en internet|busca)\s+(.+)/);
-  if (match) add("search", { query:match[1].trim() }, "Buscar información");
-  match = q.match(/^(?:abre|abrir|ve a|entra en)\s+(https?:\/\/\S+|[a-z0-9.-]+\.[a-z]{2,}(?:\/\S*)?)$/);
-  if (match) add("open_url", { url:match[1].startsWith("http")?match[1]:"https://"+match[1] }, "Abrir la dirección indicada");
-  match = q.match(/(?:temporizador|avisa(?:me)? en)\s+(\d{1,4})\s*(segundos?|minutos?)/);
-  if (match) add("timer", { seconds:Number(match[1])*(match[2].startsWith("min")?60:1) }, "Crear un temporizador");
+  const query=cleanText(input,1000);
+  const segments=query.split(/\s*(?:;|\s+y\s+(?:después|luego)\s+)\s*/i).filter(Boolean).slice(0,12);
+  const steps=[],unparsedSegments=[];
+  const add=(tool,args,description)=>steps.push(step("step-"+(steps.length+1),tool,args,classifyRisk(tool),description));
+  for(const segment of segments){
+    const q=segment.toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    let match=q.match(/(?:cuanto es|calcula|calcular|resuelve)\s+(.+)/);
+    if(match){add("calculate",{expression:match[1].replace(/[?¿]/g,"").trim()},"Calcular la expresión solicitada");continue;}
+    match=q.match(/^(?:que recuerdas de|que sabes de|busca en mi memoria)\s+(.+)/);
+    if(match){add("memory_search",{query:match[1].trim()},"Consultar recuerdos relevantes");continue;}
+    match=q.match(/^(?:anota|apunta|recuerda|memoriza)(?: que)?\s+(.+)/);
+    if(match){add("note",{text:match[1].trim()},"Guardar la nota solicitada expresamente");continue;}
+    match=q.match(/^(?:busca en google|busca en internet|busca)\s+(.+)/);
+    if(match){add("search",{query:match[1].trim()},"Buscar información");continue;}
+    match=q.match(/^(?:abre|abrir|ve a|entra en)\s+(https?:\/\/\S+|[a-z0-9.-]+\.[a-z]{2,}(?:\/\S*)?)$/);
+    if(match){add("open_url",{url:match[1].startsWith("http")?match[1]:"https://"+match[1]},"Abrir la dirección indicada");continue;}
+    match=q.match(/(?:temporizador|avisa(?:me)? en)\s+(\d{1,4})\s*(segundos?|minutos?)/);
+    if(match){add("timer",{seconds:Number(match[1])*(match[2].startsWith("min")?60:1)},"Crear un temporizador");continue;}
+    unparsedSegments.push(segment);
+  }
   return Object.freeze({
-    id:"ed-plan-"+Date.now().toString(36), goal:query, steps:Object.freeze(steps),
-    status:steps.length?"planned":"no_supported_action",
+    id:"ed-plan-"+Date.now().toString(36),goal:query,steps:Object.freeze(steps),
+    unparsedSegments:Object.freeze(unparsedSegments),
+    status:!steps.length?"no_supported_action":unparsedSegments.length?"partially_planned":"planned",
     requiresReview:steps.some(s=>!AUTO_RISKS.has(s.risk))
   });
 }

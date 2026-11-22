@@ -53,18 +53,21 @@ class ProgressiveTrainingTests(unittest.TestCase):
             run1 = root / "run1"
             (run1 / "adapter").mkdir(parents=True)
             (run1 / "adapter" / "weights.bin").write_bytes(b"model-one")
-            (run1 / "run.json").write_text(json.dumps({"base_model_path": "base-a"}), encoding="utf-8")
+            (run1 / "run.json").write_text(json.dumps({"base_model_id":"unsloth/SmolLM3-3B","base_model_path":"base-a","dataset_sha256":{"train":"abc"},"code_commit":"commit-a","environment":{"cuda":"12.8"}}), encoding="utf-8")
             first = register_run(registry_path, run1, evaluation_path)
             promote(registry_path, first["version"])
 
             run2 = root / "run2"
             (run2 / "adapter").mkdir(parents=True)
             (run2 / "adapter" / "weights.bin").write_bytes(b"model-two")
-            (run2 / "run.json").write_text(json.dumps({"base_model_path": "base-a"}), encoding="utf-8")
+            (run2 / "run.json").write_text(json.dumps({"base_model_id":"unsloth/SmolLM3-3B","base_model_path":"base-a","dataset_sha256":{"train":"def"},"code_commit":"commit-b","environment":{"cuda":"12.8"}}), encoding="utf-8")
             second = register_run(registry_path, run2, evaluation_path)
             promoted = promote(registry_path, second["version"])
 
             self.assertEqual(promoted["active"], second["version"])
+            self.assertEqual(second["base_model_id"], "unsloth/SmolLM3-3B")
+            self.assertEqual(second["dataset_sha256"]["train"], "def")
+            self.assertEqual(second["code_commit"], "commit-b")
             statuses = {v["version"]: v["status"] for v in read_registry(registry_path)["versions"]}
             self.assertEqual(statuses[first["version"]], "previous")
             self.assertEqual(statuses[second["version"]], "active")

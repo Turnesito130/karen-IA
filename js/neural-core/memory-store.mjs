@@ -61,6 +61,36 @@ export function createMemoryStore({ storage, key = DEFAULT_KEY, now = () => new 
     write(items);
     return { ...item };
   }
+  function similarity(a, b) {
+    const left = new Set(tokens(a)), right = new Set(tokens(b));
+    if (!left.size || !right.size) return 0;
+    let common = 0;
+    for (const token of left) if (right.has(token)) common++;
+    return common / (left.size + right.size - common);
+  }
+  function findConflicts(input, { type, threshold = 0.55 } = {}) {
+    const content = normalizeText(input);
+    if (typeof threshold !== "number" || threshold < 0.2 || threshold > 1) throw new RangeError("Umbral de conflicto no válido.");
+    const targetType = TYPES.has(type) ? type : null;
+    return read().filter(item => item.status === "active" && item.content.toLocaleLowerCase("es") !== content.toLocaleLowerCase("es") && (!targetType || item.type === targetType))
+      .map(item => ({ ...item, similarity: Number(similarity(content, item.content).toFixed(3)) }))
+      .filter(item => item.similarity >= threshold)
+      .sort((a, b) => b.similarity - a.similarity);
+  }
+  function resolveConflict(id, supersedeIds = []) {
+    if (!Array.isArray(supersedeIds) || supersedeIds.length > 20) throw new TypeError("Lista de recuerdos a sustituir no válida.");
+    const items = read(), target = items.find(item => item.id === id);
+    if (!target) return false;
+    const ids = new Set(supersedeIds.filter(value => typeof value === "string" && value !== id));
+    for (const item of items) if (ids.has(item.id) && item.type === target.type) {
+      item.status = "superseded";
+      item.updatedAt = now();
+    }
+    target.status = "active";
+    target.updatedAt = now();
+    write(items);
+    return true;
+  }
   function search(query, { limit = 8, includeUncertain = false } = {}) {
     const queryTokens = [...new Set(tokens(query))];
     if (!queryTokens.length) return [];
@@ -71,7 +101,7 @@ export function createMemoryStore({ storage, key = DEFAULT_KEY, now = () => new 
       if (!matches) return null;
       const coverage = matches / queryTokens.length;
       const precision = matches / Math.max(1, contentTokens.size);
-      return { ...item, relevance: Number((coverage * 0.75 + precision * 0.25).toFixed(3)) };
+      const lexical = coverage * 0.75 + precision * 0.25;\n      const ageDays = Math.max(0, (Date.parse(now()) - Date.parse(item.updatedAt || item.createdAt)) / 86400000);\n      const freshness = Number.isFinite(ageDays) ? 1 / (1 + ageDays / 365) : 0.8;\n      const confidence = safeConfidence(item.confidence);\n      return { ...item, relevance: Number((lexical * (0.75 + confidence * 0.25) * (0.9 + freshness * 0.1)).toFixed(3)) };
     }).filter(Boolean).sort((a, b) => b.relevance - a.relevance || b.updatedAt.localeCompare(a.updatedAt)).slice(0, Math.max(1, Math.min(20, limit)));
   }
   function update(id, patch = {}) {
@@ -172,5 +202,5 @@ export function createMemoryStore({ storage, key = DEFAULT_KEY, now = () => new 
     write([...current, ...incoming].slice(-1000));
     return incoming.length;
   }
-  return Object.freeze({ remember, search, update, forget, forgetMatching, clear, list, context, health, exportJSON, importJSON });
+  return Object.freeze({ remember, search, findConflicts, resolveConflict, update, forget, forgetMatching, clear, list, context, health, exportJSON, importJSON });
 }

@@ -46,8 +46,10 @@ export default {
     if(request.method==="OPTIONS")return new Response(null,{status:204,headers});
     if(url.pathname==="/health"&&request.method==="GET")return json({ok:true,service:"karen-encrypted-memory-vault",protocol:1},200,headers);
     if(url.pathname!=="/v1/memory")return json({error:"Ruta no encontrada."},404,headers);
+    if(typeof env.KAREN_SYNC_TOKEN!=="string"||env.KAREN_SYNC_TOKEN.length<32||!env.DB)
+      return json({error:"Configuración segura del servidor incompleta."},503,headers);
     const authorization=request.headers.get("Authorization")||"";
-    if(!env.KAREN_SYNC_TOKEN||!equalSecret(authorization.startsWith("Bearer ")?authorization.slice(7):"",env.KAREN_SYNC_TOKEN))
+    if(!equalSecret(authorization.startsWith("Bearer ")?authorization.slice(7):"",env.KAREN_SYNC_TOKEN))
       return json({error:"No autorizado."},401,headers);
     if(request.method==="GET") {
       const row=await env.DB.prepare("SELECT revision,envelope FROM memory_vault WHERE id=1").first();

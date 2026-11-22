@@ -30,6 +30,19 @@ En Windows PowerShell, configura las mismas variables con `$env:KAREN_SYNC_TOKEN
 
 El servidor guarda por defecto en `~/.karen/memory-vault.json`, fuera del repositorio. Está diseñado para una sola instancia/proceso y una bóveda privada; no debe ejecutarse con varias réplicas que compartan el mismo archivo.
 
+## Despliegue con Docker
+
+En un servidor Linux que permanezca disponible:
+
+1. Clona el repositorio y copia `.env.example` a `.env`.
+2. Genera un token aleatorio (por ejemplo, `openssl rand -hex 32`) y colócalo en `KAREN_SYNC_TOKEN`. No compartas ni subas `.env`.
+3. Configura `KAREN_SYNC_ORIGIN` con el origen HTTPS exacto de la aplicación Karen.
+4. Ejecuta `docker compose up -d --build`.
+5. Configura un proxy inverso con TLS que reenvíe a `127.0.0.1:8787`. El contenedor no termina HTTPS por sí mismo.
+6. Comprueba `https://TU-DOMINIO/v1/memory` desde la aplicación Karen. La ruta requiere autenticación; `/health` sirve para comprobar el proceso.
+
+Los datos persistentes quedan en `./karen-data`, ignorado por Git. Haz una copia cifrada y segura del volumen. El servidor actual es de una sola instancia/proceso; no lo escales horizontalmente compartiendo el mismo archivo.
+
 ## Conectar desde el cliente
 
 La aplicación debe pedir al usuario, durante la sesión de sincronización:

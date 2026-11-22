@@ -18,7 +18,7 @@ test("Chromebook file bundle loads current memory, knowledge, autonomy and revie
  await native.load();
  const identity=await native.generate([{role:"user",content:"¿Quién eres?"}]);
  assert.match(identity,/Soy Karen/);
- assert.doesNotMatch(identity,/Soy E\\.D\\./);
+ assert.doesNotMatch(identity,/Soy E[.]D[.]/);
 
  assert.equal(typeof adapter.memoryConflicts,"function");
  assert.equal(typeof adapter.resolveMemoryConflict,"function");

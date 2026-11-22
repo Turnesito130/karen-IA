@@ -86,3 +86,15 @@ La biblioteca inicial de Karen contiene 30 fichas educativas aprobadas en españ
 ## Entrenamiento supervisado experimental
 
 El toolkit opcional de Python está en [training/README.md](training/README.md). Permite validar ejemplos aprobados, eliminar duplicados exactos, crear particiones reproducibles de entrenamiento/validación/test y preparar un ajuste LoRA con Unsloth sobre un modelo compatible que ya esté descargado localmente. No se ejecuta dentro del navegador ni en el Chromebook bloqueado, no descarga modelos y no se conecta automáticamente al chat. El núcleo JavaScript propio sigue siendo independiente. Consulta primero las limitaciones de hardware, privacidad y evaluación documentadas en esa guía.
+
+## Mejoras de memoria, autonomía y conocimiento (fase 0.5)
+
+En esta rama se han reforzado los módulos JavaScript del núcleo:
+
+- **Memoria personal:** el adaptador incorpora recuerdos pertinentes al contexto de respuesta; expone guardar con consentimiento, búsqueda, corrección, borrado, exportación/importación y diagnóstico de almacenamiento. La importación limita el tamaño y valida los campos. La memoria sigue siendo local a cada navegador salvo que se use la sincronización opcional documentada arriba.
+- **Autonomía controlada:** el Agent Runtime admite cancelación, límite de pasos y parada ante el primer fallo o aprobación denegada. Las herramientas deben estar registradas por la aplicación; las acciones de riesgo medio/alto/crítico requieren aprobación. No obtiene control general del dispositivo ni ejecuta acciones que no estén implementadas.
+- **Conocimiento:** la recuperación local añade sinónimos españoles y más peso a coincidencias en títulos; el adaptador incorpora fragmentos aprobados con identificadores de fuente en el contexto del núcleo. No convierte una biblioteca pequeña en conocimiento general ni valida por sí sola la veracidad de nuevas fichas.
+
+Se añadieron pruebas Node.js para memoria, autonomía y recuperación de conocimiento, y un job de GitHub Actions para ejecutarlas. **La nota 10/10 de memoria, 5/10 de autonomía y 7/10 de conocimiento sigue siendo un objetivo, no un resultado certificado**: hay que ejecutar CI, probar el flujo desde la interfaz y comprobar persistencia, recuperación, conflictos, sincronización y acciones reales en los dispositivos objetivo.
+
+**Compatibilidad pendiente:** la aplicación ChromeOS abierta desde `file://` carga `js/neural-core/chromebook-file-bundle.js`. Los cambios de módulos fuente deben incorporarse también a ese bundle y probarse en el Acer físico antes de considerarlos disponibles en esa modalidad.

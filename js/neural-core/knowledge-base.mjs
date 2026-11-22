@@ -59,8 +59,15 @@ export function createKnowledgeBase(documents=[]) {
       }
       const coverage=(titleHits+bodyHits)/Math.max(1,original.length);
       const direct=original.filter(term=>doc.terms.has(term)).length/Math.max(1,original.length);
-      const score=coverage*0.72+direct*0.28;
-      return {id:doc.id,title:doc.title,text:doc.text,domain:doc.domain,source:doc.source,score:Number(score.toFixed(3)),matchedTerms:original.filter(term=>doc.terms.has(term))};
+      const normalizedQuery=String(query).toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9\\s]/g," ").trim();
+      const normalizedTitle=doc.title.toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9\\s]/g," ").trim();
+      const normalizedText=doc.text.toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9\\s]/g," ").trim();
+      const phraseInTitle=normalizedQuery.length>=4&&normalizedTitle.includes(normalizedQuery);
+      const phraseInBody=normalizedQuery.length>=6&&normalizedText.includes(normalizedQuery);
+      const phraseBonus=phraseInTitle?0.45:phraseInBody?0.2:0;
+      const score=Math.min(2,coverage*0.72+direct*0.28+phraseBonus);
+      const matchedTerms=original.filter(term=>doc.terms.has(term));
+      return {id:doc.id,title:doc.title,text:doc.text,domain:doc.domain,source:doc.source,score:Number(score.toFixed(3)),matchedTerms,matchType:phraseInTitle?"exact-title-phrase":phraseInBody?"exact-body-phrase":matchedTerms.length?"term-overlap":"expanded-synonym"};
     }).filter(item=>item.score>=minScore).sort((a,b)=>b.score-a.score || a.id.localeCompare(b.id));
     return scored.slice(0,Math.max(1,Math.min(8,limit)));
   }

@@ -59,9 +59,9 @@ export function createKnowledgeBase(documents=[]) {
       }
       const coverage=(titleHits+bodyHits)/Math.max(1,original.length);
       const direct=original.filter(term=>doc.terms.has(term)).length/Math.max(1,original.length);
-      const normalizedQuery=String(query).toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9\\s]/g," ").trim();
-      const normalizedTitle=doc.title.toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9\\s]/g," ").trim();
-      const normalizedText=doc.text.toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").replace(/[^a-z0-9\\s]/g," ").trim();
+      const normalizedQuery=String(query).toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\s]/g," ").trim();
+      const normalizedTitle=doc.title.toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\s]/g," ").trim();
+      const normalizedText=doc.text.toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\s]/g," ").trim();
       const phraseInTitle=normalizedQuery.length>=4&&normalizedTitle.includes(normalizedQuery);
       const phraseInBody=normalizedQuery.length>=6&&normalizedText.includes(normalizedQuery);
       const phraseBonus=phraseInTitle?0.45:phraseInBody?0.2:0;

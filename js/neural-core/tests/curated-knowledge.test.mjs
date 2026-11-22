@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createCuratedKnowledgeBase } from "../curated-knowledge.mjs";
-test("includes reviewed technical knowledge on connectivity, model tuning and security",()=>{
+test("includes new technical knowledge cards on connectivity, model tuning and security",()=>{
  const kb=createCuratedKnowledgeBase();
  assert.ok(kb.size>=40);
  assert.ok(kb.search("Bluetooth bombilla inteligente").some(x=>x.id==="kb-tech-008"));

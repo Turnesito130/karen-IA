@@ -3,6 +3,15 @@
  * No ejecuta contenido de documentos. Los textos recuperados son datos no confiables.
  */
 const STOP = new Set(["a","al","algo","como","con","de","del","el","en","es","esta","este","la","las","lo","los","más","para","por","que","se","su","un","una","y"]);
+const SYNONYMS = Object.freeze({
+  "ordenador":["computadora","pc","equipo"], "computadora":["ordenador","pc","equipo"],
+  "movil":["telefono","smartphone","celular"], "telefono":["movil","smartphone","celular"],
+  "ia":["inteligencia","artificial"], "inteligencia":["ia"], "artificial":["ia"],
+  "coche":["automovil","vehiculo"], "vehiculo":["coche","automovil"],
+  "dinero":["moneda","economia","finanzas"], "planeta":["mundo","astro"],
+  "medico":["medicina","salud"], "programar":["programacion","codigo"],
+  "javascript":["js","programacion"], "internet":["web","red"]
+});
 function tokens(value) {
   return String(value || "").toLocaleLowerCase("es").normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "").match(/[a-z0-9]{2,}/g)?.filter(token => !STOP.has(token)) || [];
@@ -36,13 +45,22 @@ export function createKnowledgeBase(documents=[]) {
   });
   const indexed=docs.map(doc=>({...doc,terms:new Set(tokens(doc.title+" "+doc.text))}));
   function search(query,{limit=4,minScore=0.08}={}) {
-    const queryTokens=[...new Set(tokens(query))];
-    if(!queryTokens.length) return [];
+    const original=[...new Set(tokens(query))];
+    if(!original.length) return [];
+    const expanded=new Set(original);
+    for(const term of original) for(const alias of SYNONYMS[term]||[]) expanded.add(alias);
     const scored=indexed.map(doc=>{
-      let score=0;
-      for(const term of queryTokens) if(doc.terms.has(term)) score+=1+Math.log(1+doc.text.toLocaleLowerCase("es").split(term).length-1);
-      const coverage=score/queryTokens.length;
-      return {id:doc.id,title:doc.title,text:doc.text,domain:doc.domain,source:doc.source,score:Number(coverage.toFixed(3))};
+      let titleHits=0,bodyHits=0;
+      for(const term of expanded) {
+        if(!doc.terms.has(term)) continue;
+        const inTitle=tokens(doc.title).includes(term);
+        if(inTitle) titleHits+=2.2;
+        else bodyHits+=1+Math.log(1+doc.text.toLocaleLowerCase("es").split(term).length-1);
+      }
+      const coverage=(titleHits+bodyHits)/Math.max(1,original.length);
+      const direct=original.filter(term=>doc.terms.has(term)).length/Math.max(1,original.length);
+      const score=coverage*0.72+direct*0.28;
+      return {id:doc.id,title:doc.title,text:doc.text,domain:doc.domain,source:doc.source,score:Number(score.toFixed(3)),matchedTerms:original.filter(term=>doc.terms.has(term))};
     }).filter(item=>item.score>=minScore).sort((a,b)=>b.score-a.score || a.id.localeCompare(b.id));
     return scored.slice(0,Math.max(1,Math.min(8,limit)));
   }

@@ -8,6 +8,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { homedir } from "node:os";
 
 const MAX_BODY = 4_500_000;
 
@@ -72,7 +73,7 @@ function revisionFor(envelope) {
 export function createMemoryVaultServer({
   token=process.env.KAREN_SYNC_TOKEN || "",
   origin=process.env.KAREN_SYNC_ORIGIN || "",
-  dataFile=process.env.KAREN_SYNC_FILE || join(process.cwd(),"data","memory-vault.json")
+  dataFile=process.env.KAREN_SYNC_FILE || join(homedir(),".karen","memory-vault.json")
 }={}) {
   if(typeof token!=="string"||token.length<32)throw new Error("El token debe tener al menos 32 caracteres.");
   if(typeof origin!=="string")throw new TypeError("El origen permitido debe ser texto.");

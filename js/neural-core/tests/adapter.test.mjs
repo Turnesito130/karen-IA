@@ -17,3 +17,13 @@ test("injects only relevant personal memories and cited local knowledge",async()
  assert.match(knowledge,/CONOCIMIENTO LOCAL RECUPERADO/);
  assert.match(knowledge,/kb-sci-005/);
 });
+
+test("exposes conflict review and resolution for personal memories",()=>{
+ const adapter=createEDOpenJarvisAdapter({brain:{id:"test",ready:true,generate:async()=>"ok"},storage:storage()});
+ const old=adapter.remember({content:"Prefiero respuestas breves",type:"preference",consent:true});
+ const next=adapter.remember({content:"Prefiero respuestas largas",type:"preference",consent:true});
+ assert.equal(next.needsReview,true);
+ assert.equal(adapter.memoryConflicts("Prefiero respuestas largas",{type:"preference"}).length,1);
+ assert.equal(adapter.resolveMemoryConflict(next.id,[old.id]),true);
+ assert.equal(adapter.searchMemory("respuestas").some(x=>x.id===next.id),true);
+});

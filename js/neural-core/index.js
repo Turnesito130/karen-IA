@@ -74,3 +74,4 @@ export { createLearningProfile, loadLearningProfile, saveLearningProfile, delete
 export { coordinateReasoning } from "./reasoning-coordinator.js";
 export { createStudySession, formatStudyAnswer } from "./study-tutor.js";
 export { createMemorySync, validateMemorySyncEnvelope, mergeMemorySyncEnvelopes } from "./memory-sync.mjs";
+export { createEncryptedMemoryTransport, validateCipherEnvelope } from "./memory-sync-transport.mjs";

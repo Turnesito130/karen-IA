@@ -32,7 +32,9 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
       if(!raw){const legacy=backend.getItem("ed_structured_memory_v1");if(legacy){raw=legacy;backend.setItem(key,legacy);}}
       const parsed=JSON.parse(raw||"[]");
       if(!Array.isArray(parsed))throw new TypeError("El formato almacenado no es una lista.");
-      return parsed.filter(item=>item&&typeof item.id==="string"&&typeof item.content==="string"&&TYPES.has(item.type)&&STATUSES.has(item.status));
+      const valid=parsed.filter(item=>item&&typeof item.id==="string"&&typeof item.content==="string"&&TYPES.has(item.type)&&STATUSES.has(item.status));
+      if(valid.length!==parsed.length)throw new TypeError("Hay recuerdos con campos o estados no válidos.");
+      return valid;
     }catch(error){
       corrupt=true;
       throw new Error("La memoria local no se puede leer. No se sobrescribirá para evitar pérdida de datos: "+String(error?.message||error));
@@ -151,7 +153,8 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
       if(!item||typeof item.id!=="string"||item.id.length>100||typeof item.content!=="string"||!item.content.trim()||item.content.length>1200||!TYPES.has(item.type)||typeof item.source!=="string"||item.source.length>160||!Number.isFinite(item.confidence)||item.confidence<0||item.confidence>1||!STATUSES.has(item.status)||typeof item.createdAt!=="string"||typeof item.updatedAt!=="string"||seen.has(item.id))continue;
       seen.add(item.id);incoming.push({id:item.id,content:item.content.trim(),type:item.type,source:item.source,confidence:item.confidence,status:item.status,createdAt:item.createdAt,updatedAt:item.updatedAt});
     }
-    if(current.length+incoming.length>1000)throw new RangeError("La importación superaría los 1000 recuerdos. Exporta o elimina recuerdos antes de importar.");\n    write([...current,...incoming]);return incoming.length;
+    if(current.length+incoming.length>1000)throw new RangeError("La importación superaría los 1000 recuerdos. Exporta o elimina recuerdos antes de importar.");
+    write([...current,...incoming]);return incoming.length;
   }
   return Object.freeze({remember,search,findConflicts,resolveConflict,update,forget,forgetMatching,clear,list,context,health,exportJSON,importJSON});
 }

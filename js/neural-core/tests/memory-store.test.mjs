@@ -26,7 +26,7 @@ test("detects conflicting preferences and requires explicit resolution",()=>{
  const newer=store.remember({content:"Prefiero respuestas largas",type:"preference",consent:true});
  assert.equal(newer.status,"uncertain");
  assert.equal(newer.needsReview,true);
- assert.equal(store.search("respuestas").some(x=>x.id===newer.id),false);
+ assert.equal(store.search("respuestas").length,0);
  assert.equal(store.search("respuestas",{includeUncertain:true}).some(x=>x.id===newer.id),true);
  assert.equal(store.resolveConflict(newer.id,[old.id]),true);
  assert.equal(store.list({status:"all"}).find(x=>x.id===old.id).status,"superseded");

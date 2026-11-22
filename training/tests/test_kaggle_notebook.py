@@ -77,7 +77,8 @@ class KaggleNotebookTests(unittest.TestCase):
         self.assertIn('x.approved===true&&x.review_status==="approved"', html)
         self.assertIn('approved<10', html)
         self.assertNotIn("approve all", html.lower())
-        self.assertNotIn("fetch(\"", html.lower().replace("fetch(\"./datasets/", "fetch(\""))
+        self.assertIn("fetch(defaultPath", html)
+        self.assertNotIn('method:"POST"', html)
 
 if __name__ == "__main__":
     unittest.main()

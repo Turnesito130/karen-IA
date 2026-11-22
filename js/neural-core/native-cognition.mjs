@@ -27,7 +27,10 @@ export function createNativeCognition({storage=null}={}){
   if(/^(que has aprendido|que sabes ahora|muestrame lo aprendido|lista lo aprendido)\??$/.test(q)){const a=read(target);return a.length?"He aprendido "+a.length+" datos:\n"+a.slice(-12).map(x=>"• "+x.question+": "+x.answer).join("\n"):"Todavía no me has enseñado datos. Usa «Aprende que [concepto] significa [explicación]»."}
   const fm=query.match(/^olvida(?: lo aprendido sobre)?\s+(.+)$/i);if(fm){const n=forget(fm[1]);return n?"He olvidado "+n+" dato(s).":"No he encontrado datos sobre ese tema."}
   const relation=inferRelation({facts:read(target),query});
-  if(relation.status==="entailed")return "Sí. Puedo deducirlo a partir de los datos que me has enseñado: "+relation.path.join(" → ")+". Esta conclusión se basa en "+(relation.path.length-1)+" relación(es) guardadas en mi memoria.";
+  if(relation.status==="entailed")return "Sí. Puedo deducirlo a partir de los datos que me has enseñado: "+relation.path.join(" → ")+". Esta conclusión se basa en "+(relation.path.length-1)+" relación(es) guardadas en mi memoria. Evidencias: "+relation.evidence.map(x=>x.id).join(", ")+".";
+  if(relation.status==="contradicted")return "No. Los datos que me enseñaste contradicen esa afirmación. La ruta o evidencia encontrada es: "+relation.path.join(" → ")+". Evidencias: "+relation.evidence.map(x=>x.id).join(", ")+".";
+  if(relation.status==="conflict")return "No puedo elegir una respuesta: tengo datos guardados que se contradicen entre sí. Revisa y corrige esos recuerdos antes de que saque una conclusión.";
+
   const known=recall(query,{limit:1});if(known.length)return known[0].answer+"\n\n(Recuperado de mi aprendizaje local.)";
   if(/^(hola|holaa|buenas|buenos dias|buenas tardes|buenas noches|hey|que tal)\b/.test(q))return "¡Hola! Soy E.D. Mi núcleo cognitivo propio está activo. Puedo calcular, recuperar conocimientos locales y aprender datos que me enseñes. Sigo ampliando mis capacidades.";
   if(/^(quien eres|que eres|que es ed|que es e d)\??$/.test(q))return "Soy E.D., un asistente construido con un núcleo cognitivo propio. No utilizo Qwen, Gemini, ChatGPT, Claude ni APIs de IA. Mi versión actual combina reglas lógicas, cálculo verificable, memoria local y recuperación de conocimiento. Mi comprensión del lenguaje todavía es limitada.";

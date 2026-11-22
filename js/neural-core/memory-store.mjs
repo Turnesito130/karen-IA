@@ -40,7 +40,7 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
     let common=0;for(const token of left)if(right.has(token))common++;
     return common/(left.size+right.size-common);
   }
-  function findConflicts(input,{type,threshold=.55}={}){
+  function findConflicts(input,{type,threshold=.45}={}){
     const content=normalizeText(input);
     if(typeof threshold!=="number"||threshold<.2||threshold>1)throw new RangeError("Umbral de conflicto no válido.");
     const targetType=TYPES.has(type)?type:null;

@@ -27,7 +27,9 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
   if(!backend||typeof backend.getItem!=="function"||typeof backend.setItem!=="function")throw new TypeError("Se necesita un almacenamiento compatible con localStorage.");
   function read(){
     try{
-      const parsed=JSON.parse(backend.getItem(key)||"[]");
+      let raw=backend.getItem(key);
+      if(!raw){const legacy=backend.getItem("ed_structured_memory_v1");if(legacy){raw=legacy;backend.setItem(key,legacy);}}
+      const parsed=JSON.parse(raw||"[]");
       return Array.isArray(parsed)?parsed.filter(item=>item&&typeof item.id==="string"&&typeof item.content==="string"&&TYPES.has(item.type)&&STATUSES.has(item.status)):[];
     }catch{return []}
   }

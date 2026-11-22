@@ -41,6 +41,14 @@ python training/prepare_dataset.py --input training/datasets/raw.jsonl --output-
 
 Revisa `report.json` y los tres ficheros. Se requieren al menos 10 ejemplos válidos para crear splits no vacíos; aun así, las métricas con pocos datos no son representativas. Un ajuste serio necesita muchos más ejemplos diversos y revisados.
 
+Antes de preparar los splits, ejecuta también la auditoría:
+
+```bash
+python training/audit_dataset.py --input training/datasets/raw.jsonl --output training/datasets/audit.json
+```
+
+La auditoría detecta fuentes ausentes, ejemplos no aprobados, pares repetidos y preguntas muy parecidas con respuestas diferentes. No verifica hechos ni elimina ejemplos automáticamente; revisa sus avisos manualmente. Para detener el proceso si encuentra avisos, añade `--fail-on-issues`.
+
 ## Entrenamiento
 ```bash
 python training/train_unsloth.py \

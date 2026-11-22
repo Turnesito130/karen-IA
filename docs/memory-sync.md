@@ -43,6 +43,20 @@ En un servidor Linux que permanezca disponible:
 
 Los datos persistentes quedan en `./karen-data`, ignorado por Git. Haz una copia cifrada y segura del volumen. El servidor actual es de una sola instancia/proceso; no lo escales horizontalmente compartiendo el mismo archivo.
 
+## Alternativa sin ordenador encendido: Cloudflare Worker + D1
+
+También se incluye un backend opcional para Cloudflare. Es un servicio de almacenamiento, no una IA: guarda únicamente el paquete cifrado. Puede atender a Karen aunque tu ordenador personal esté apagado, sujeto a las cuotas y condiciones actuales del plan de Cloudflare. Requiere una cuenta y una configuración inicial; no se ha desplegado desde este repositorio.
+
+1. Instala Node.js y Wrangler, e inicia sesión con `npx wrangler login`.
+2. Crea la base: `npx wrangler d1 create karen-memory-vault`.
+3. Copia el `database_id` que devuelve el comando en `wrangler.toml`, sustituyendo el marcador.
+4. Inicializa el esquema: `npx wrangler d1 execute karen-memory-vault --remote --file=server/schema.sql`.
+5. Crea un token largo: `openssl rand -hex 32`; guárdalo como secreto con `npx wrangler secret put KAREN_SYNC_TOKEN`.
+6. Comprueba que `KAREN_SYNC_ORIGIN` en `wrangler.toml` coincide con el origen HTTPS de Karen.
+7. Despliega: `npx wrangler deploy`. Usa la URL HTTPS del Worker en el panel de sincronización de Karen.
+
+La frase de cifrado se introduce en cada dispositivo y no se envía a Cloudflare. El token autoriza el acceso a la bóveda, pero por sí solo no descifra los recuerdos. Consulta los límites vigentes de Workers y D1 antes de depender de este servicio.
+
 ## Conectar desde el cliente
 
 La aplicación debe pedir al usuario, durante la sesión de sincronización:

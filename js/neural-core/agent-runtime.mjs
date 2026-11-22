@@ -13,6 +13,34 @@ function cleanText(value, max = 500) {
   return text;
 }
 
+function safeArgs(value, depth = 0) {
+  if (depth > 6) throw new TypeError("Los argumentos superan la profundidad permitida.");
+  if (value === null || ["string", "number", "boolean"].includes(typeof value)) {
+    if (typeof value === "number" && !Number.isFinite(value)) throw new TypeError("Número no válido en argumentos.");
+    if (typeof value === "string" && value.length > 2000) throw new TypeError("Texto de argumento demasiado largo.");
+    return value;
+  }
+  if (Array.isArray(value)) {
+    if (value.length > 50) throw new TypeError("Lista de argumentos demasiado grande.");
+    return value.map(item => safeArgs(item, depth + 1));
+  }
+  if (typeof value !== "object" || Object.getPrototypeOf(value) !== Object.prototype) throw new TypeError("Solo se permiten argumentos JSON simples.");
+  const entries = Object.entries(value);
+  if (entries.length > 50) throw new TypeError("Demasiados campos en argumentos.");
+  const result = Object.create(null);
+  for (const [key, item] of entries) {
+    if (["__proto__", "prototype", "constructor"].includes(key)) throw new TypeError("Clave de argumento no permitida.");
+    result[key] = safeArgs(item, depth + 1);
+  }
+  return result;
+}
+function deepFreeze(value) {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
+}
 function step(id, tool, args, risk = RISK.LOW, description = tool) {
   return Object.freeze({ id, tool, args: Object.freeze({ ...args }), risk, description });
 }
@@ -64,7 +92,7 @@ export function validatePlan(plan) {
   for (const item of plan.steps) {
     if (!item || typeof item.id !== "string" || ids.has(item.id)) return false;
     ids.add(item.id);
-    if (typeof item.tool !== "string" || !item.tool || !item.args || typeof item.args !== "object" || Array.isArray(item.args)) return false;
+    if (typeof item.tool !== "string" || !/^[a-z][a-z0-9_]{0,40}$/.test(item.tool) || !item.args || typeof item.args !== "object" || Array.isArray(item.args)) return false;\n    try { const safe = safeArgs(item.args); if (JSON.stringify(safe).length > 8000) return false; } catch { return false; }
     if (![RISK.LOW, RISK.MEDIUM, RISK.HIGH, RISK.CRITICAL].includes(item.risk)) return false;
     if (item.risk !== classifyRisk(item.tool)) return false;
   }
@@ -84,37 +112,37 @@ export function createAgentRuntime({ tools = {}, onAudit = () => {} } = {}) {
       if (shouldStop()) {
         halted = true;
         results.push({ id:item.id, status:"cancelled", message:"Ejecución detenida por la señal de cancelación." });
-        onAudit({ type:"workflow_cancelled", tool:item.tool, risk:item.risk });
+        audit({ type:"workflow_cancelled", tool:item.tool, risk:item.risk });
         break;
       }
-      if (!registry.has(item.tool)) {
+      if (dryRun) { results.push({ id:item.id, status:"simulated", message:"No se ejecutó ninguna herramienta (modo de simulación)." }); continue; }\n      if (!registry.has(item.tool)) {
         results.push({ id: item.id, status: "unavailable", message: "Herramienta no registrada." });
-        onAudit({ type: "tool_unavailable", tool: item.tool, risk: item.risk });
+        audit({ type: "tool_unavailable", tool: item.tool, risk: item.risk });
         if (stopOnFailure) { halted = true; break; }
         continue;
       }
       if (!AUTO_RISKS.has(item.risk)) {
-        const allowed = await approve(Object.freeze({ ...item }));
+        let allowed = false;\n        try { allowed = await approve(deepFreeze({ ...item, args:safeArgs(item.args) })); } catch { allowed = false; }
         if (allowed !== true) {
           results.push({ id: item.id, status: "approval_required", message: "No se ejecutó: falta autorización explícita." });
-          onAudit({ type: "approval_denied", tool: item.tool, risk: item.risk });
+          audit({ type: "approval_denied", tool: item.tool, risk: item.risk });
           if (stopOnFailure) { halted = true; break; }
           continue;
         }
       }
       try {
-        const value = await registry.get(item.tool)(Object.freeze({ ...item.args }));
+        const args = deepFreeze(safeArgs(item.args));\n        const value = await registry.get(item.tool)(args);
         results.push({ id: item.id, status: "completed", value });
-        onAudit({ type: "tool_completed", tool: item.tool, risk: item.risk });
+        audit({ type: "tool_completed", tool: item.tool, risk: item.risk });
       } catch (error) {
         results.push({ id: item.id, status: "failed", message: String(error?.message || error) });
-        onAudit({ type: "tool_failed", tool: item.tool, risk: item.risk });
+        audit({ type: "tool_failed", tool: item.tool, risk: item.risk });
         if (stopOnFailure) { halted = true; break; }
       }
     }
     return Object.freeze({ planId: plan.id, halted, results: Object.freeze(results) });
   }
-  return Object.freeze({ plan: planTask, execute, listTools: () => [...registry.keys()] });
+  return Object.freeze({ plan: planTask, execute, listTools: () => [...registry.keys()], diagnostics: () => Object.freeze({ registeredTools:registry.size, auditFailures }) });
 }
 
 export const RISK_LEVELS = RISK;

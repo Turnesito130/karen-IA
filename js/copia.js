@@ -33,7 +33,7 @@ async function exportarMemoria() {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url;
-    a.download = "copia-ed2-" + new Date().toISOString().slice(0, 10) + ".json";
+    a.download = "copia-karen-" + new Date().toISOString().slice(0, 10) + ".json";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     showSub("Copia completa preparada: memoria antigua, tarjetas y recuerdos estructurados.");

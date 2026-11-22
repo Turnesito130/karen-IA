@@ -1,49 +1,70 @@
-# Sincronización de memoria de Karen
+# Sincronización privada de la memoria de Karen
 
-## Estado
+## Estado real
 
-El protocolo está implementado en `js/neural-core/memory-sync.mjs` y cubierto por pruebas automatizadas. **No hay todavía un servidor conectado ni sincronización activa entre dispositivos.** La memoria actual sigue guardándose localmente hasta que la aplicación proporcione un transporte remoto seguro.
+El protocolo de combinación, el transporte cifrado y un servidor Node autoalojable están implementados y tienen pruebas automatizadas. **Todavía no hay un servidor desplegado ni sincronización activa entre los dispositivos.** La aplicación web aún no muestra el formulario para conectar el servidor; esta base técnica no se debe confundir con una función ya disponible para el usuario.
 
-## Contrato del transporte
+## Arquitectura
 
-`createMemorySync({ memory, transport, deviceId })` necesita un transporte con dos métodos:
+- `memory-store.mjs`: conserva los recuerdos localmente y exige consentimiento para guardarlos.
+- `memory-sync.mjs`: combina recuerdos de varios dispositivos, detecta conflictos y usa revisiones compare-and-swap para evitar sobrescrituras silenciosas.
+- `memory-sync-transport.mjs`: cifra el paquete completo en el dispositivo con AES-256-GCM antes de enviarlo. La clave se deriva de una frase secreta con PBKDF2-SHA-256 (310.000 iteraciones). La frase nunca se envía al servidor.
+- `server/memory-sync-server.mjs`: servidor Node que almacena solo sobres cifrados, exige token de acceso y aplica escrituras condicionales.
 
-- `read()` devuelve `{ revision: string | null, envelope: object | null }`.
-- `compareAndSwap({ expectedRevision, envelope })` guarda el paquete solo si la revisión actual coincide y devuelve `{ ok: boolean, revision?: string }`.
+El servidor no es un cerebro ni una IA externa: únicamente guarda un paquete cifrado para que los dispositivos autorizados puedan compartir sus recuerdos.
 
-La escritura debe ser atómica: si otro dispositivo cambió el paquete desde la lectura, debe devolver `{ ok: false }`. El protocolo vuelve a leer y reintenta un número limitado de veces. No se debe implementar el contrato con una escritura ciega de tipo "último gana".
+## Preparar el servidor
 
-## Seguridad obligatoria antes de conectar un servidor
+Requisitos: Node.js 20 o superior y un servidor propio o alojamiento Node que permanezca disponible. Ejecutar el servidor detrás de HTTPS (por ejemplo, mediante un proxy inverso con TLS). No exponerlo directamente a Internet sin HTTPS.
 
-1. El transporte debe autenticar al usuario y autorizar únicamente su espacio privado.
-2. El contenido debe viajar cifrado mediante HTTPS y, para datos personales, debe añadirse cifrado de extremo a extremo antes de persistirlo en el servidor.
-3. Las credenciales nunca se guardan en el repositorio, el navegador en texto plano ni dentro de los paquetes de memoria.
-4. El servidor no debe usar GitHub como base de datos de recuerdos.
-5. La aplicación debe permitir revisar una previsualización antes de la primera sincronización.
+Genera un token aleatorio largo y configura variables de entorno. Ejemplo en Linux:
 
-El módulo no incluye red, autenticación, cifrado ni almacenamiento en la nube. Esas responsabilidades pertenecen al transporte que se conecte más adelante.
-
-## Conflictos y eliminaciones
-
-- Los recuerdos nuevos se combinan por identificador.
-- Si el mismo identificador tiene contenidos diferentes, se conservan ambas versiones y se marcan como `uncertain`; no se elige una silenciosamente.
-- La sincronización no borra recuerdos locales.
-- **Las eliminaciones todavía no se propagan entre dispositivos**: el almacén actual no conserva marcas de borrado (tombstones). No se debe presentar esta versión como sincronización completa hasta implementar y probar esas marcas.
-
-## Uso
-
-```js
-const sync = createMemorySync({ memory, transport, deviceId: "phone-unique-id" });
-
-// Solo calcula qué cambiaría; no escribe ni importa nada.
-const preview = await sync.preview();
-
-// Sincroniza después de que la aplicación haya obtenido autorización del usuario.
-const result = await sync.sync();
+```bash
+export KAREN_SYNC_TOKEN="$(openssl rand -hex 32)"
+export KAREN_SYNC_ORIGIN="https://TU-DOMINIO-DE-KAREN"
+export KAREN_SYNC_FILE="$HOME/.karen/memory-vault.json"
+node server/memory-sync-server.mjs
 ```
 
-`sync.sync({ dryRun: true })` también permite simular una sincronización sin modificar el almacenamiento local ni el remoto.
+En Windows PowerShell, configura las mismas variables con `$env:KAREN_SYNC_TOKEN`, `$env:KAREN_SYNC_ORIGIN` y `$env:KAREN_SYNC_FILE`. El token debe ser idéntico en los dispositivos autorizados y no debe guardarse en GitHub. El origen debe coincidir exactamente con el dominio desde el que se sirve Karen.
+
+El servidor guarda por defecto en `~/.karen/memory-vault.json`, fuera del repositorio. Está diseñado para una sola instancia/proceso y una bóveda privada; no debe ejecutarse con varias réplicas que compartan el mismo archivo.
+
+## Conectar desde el cliente
+
+La aplicación debe pedir al usuario, durante la sesión de sincronización:
+
+- URL HTTPS del servidor.
+- Token de acceso.
+- Frase secreta de cifrado (mínimo 12 caracteres; es recomendable una frase larga y única).
+
+No guardar el token ni la frase de cifrado en localStorage, en la URL ni en el repositorio. El usuario debe introducir la misma frase en cada dispositivo. Perderla significa perder la capacidad de descifrar la copia remota.
+
+Ejemplo de integración:
+
+```js
+const transport = createEncryptedMemoryTransport({
+  baseUrl: "https://TU-DOMINIO-DE-KAREN",
+  accessToken,
+  passphrase
+});
+const sync = createMemorySync({ memory, transport, deviceId });
+
+// Primero mostrar una previsualización y pedir autorización.
+// Después, ejecutar sync.sync() tras la confirmación del usuario.
+```
+
+Ambas funciones están exportadas desde `js/neural-core/index.js`.
+
+## Protección de datos y conflictos
+
+- El servidor recibe y almacena ciphertext; no recibe el texto de los recuerdos ni la frase secreta.
+- AES-GCM autentica el contenido; si se usa una frase incorrecta o el paquete se altera, el descifrado falla y no se importa.
+- El servidor requiere un token de al menos 32 caracteres y solo permite el origen web configurado.
+- Las escrituras usan compare-and-swap; si otro dispositivo cambia la revisión, el cliente vuelve a leer y combina.
+- Si dos dispositivos modifican el mismo recuerdo de forma incompatible, ambas versiones se conservan como inciertas para revisión.
+- **Las eliminaciones todavía no se propagan** porque el almacén no conserva marcas de borrado (tombstones). No se borran recuerdos automáticamente durante la sincronización.
 
 ## Pruebas
 
-Las pruebas de `tests/memory-sync.test.mjs` cubren previsualización, intercambio bidireccional, conflictos, modo simulación, paquetes inválidos y cambios concurrentes de revisión.
+`tests/memory-sync.test.mjs` cubre combinación, conflictos y concurrencia. `tests/memory-sync-transport.test.mjs` verifica cifrado y rechazo de frases incorrectas. `tests/memory-sync-server.test.mjs` verifica autenticación, control de origen, ciphertext obligatorio y compare-and-swap.

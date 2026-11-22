@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Fine-tuning supervisado LoRA/QLoRA con Unsloth sobre un modelo local."""
 from __future__ import annotations
-import argparse, inspect, json, os
+import argparse, hashlib, inspect, json, os, subprocess, sys
+from importlib import metadata
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -16,6 +17,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--config", type=Path, help="JSON opcional con valores por defecto")
     p.add_argument("--model-path")
+    p.add_argument("--base-model-id", help="Identificador original del modelo base (solo metadatos; los pesos se cargan desde --model-path)")
     p.add_argument("--dataset-dir", type=Path)
     p.add_argument("--output-dir", type=Path)
     p.add_argument("--max-seq-length", type=int, default=1024)
@@ -37,7 +39,7 @@ def main():
             p.error(f"Configuración JSON no válida: {exc}")
         if not isinstance(config_data, dict):
             p.error("La configuración debe ser un objeto JSON.")
-        allowed = {"model_path","dataset_dir","output_dir","max_seq_length","rank","epochs",
+        allowed = {"model_path","base_model_id","dataset_dir","output_dir","max_seq_length","rank","epochs",
                    "batch_size","grad_accumulation","learning_rate","load_in_4bit","offline"}
         unknown = set(config_data) - allowed
         if unknown:
@@ -105,13 +107,34 @@ def main():
     adapter=a.output_dir/"adapter"
     model.save_pretrained(str(adapter))
     tokenizer.save_pretrained(str(adapter))
-    metadata={"format":"karen-unsloth-run-v1","created_at":datetime.now(timezone.utc).isoformat(),
-      "base_model_path":str(model_path.resolve()),"dataset_dir":str(a.dataset_dir.resolve()),
+    def sha256_file(path):
+        digest=hashlib.sha256()
+        with path.open("rb") as stream:
+            for chunk in iter(lambda:stream.read(1024*1024),b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+    def package_version(name):
+        try: return metadata.version(name)
+        except metadata.PackageNotFoundError: return None
+    try:
+        code_commit=subprocess.check_output(["git","rev-parse","HEAD"],cwd=Path(__file__).resolve().parents[1],text=True,stderr=subprocess.DEVNULL).strip()
+    except Exception:
+        code_commit=None
+    dataset_hashes={name:sha256_file(path) for name,path in {
+        "train":train_file,"validation":val_file,"test":a.dataset_dir/"test.jsonl"
+    }.items() if path.is_file()}
+    environment={"python":sys.version.split()[0],"torch":torch.__version__,
+      "cuda":torch.version.cuda,"gpu":torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+      "packages":{name:package_version(name) for name in ("unsloth","transformers","trl","peft","datasets","accelerate")}}
+    run_metadata={"format":"karen-unsloth-run-v2","created_at":datetime.now(timezone.utc).isoformat(),
+      "base_model_id":a.base_model_id,"base_model_path":str(model_path.resolve()),
+      "dataset_dir":str(a.dataset_dir.resolve()),"dataset_sha256":dataset_hashes,
+      "code_commit":code_commit,"environment":environment,
       "max_seq_length":a.max_seq_length,"rank":a.rank,"epochs":a.epochs,
       "batch_size":a.batch_size,"grad_accumulation":a.grad_accumulation,
       "learning_rate":a.learning_rate,"load_in_4bit":a.load_in_4bit,
       "offline":a.offline,"train_metrics":getattr(result,"metrics",{})}
-    (a.output_dir/"run.json").write_text(json.dumps(metadata,ensure_ascii=False,indent=2,default=str)+"\n",encoding="utf-8")
+    (a.output_dir/"run.json").write_text(json.dumps(run_metadata,ensure_ascii=False,indent=2,default=str)+"\n",encoding="utf-8")
     print("Adaptador guardado en:",adapter)
     print("No está conectado todavía al chat de Karen. Evalúa antes de desplegar.")
 if __name__=="__main__":

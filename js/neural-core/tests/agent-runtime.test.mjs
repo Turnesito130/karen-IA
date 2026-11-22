@@ -11,13 +11,13 @@ test("executes registered low-risk tools and stops on failure",async()=>{
  const result=await runtime.execute(plan);
  assert.deepEqual(calls,["6*7"]);
  assert.equal(result.results[0].status,"completed");
- assert.equal(result.results[1].status,undefined);
+ assert.equal(result.results[1].status,"failed");
  assert.equal(result.halted,true);
 });
 test("high-risk actions require approval and cancellation stops later steps",async()=>{
  let executed=0,asked=0;
  const runtime=createAgentRuntime({tools:{send_message:async()=>{executed++;}}});
- const plan={id:"p2",steps:[{id:"s1",tool:"send_message",args:{text:"hi"},risk:"high"}]};
+ const plan={id:"p2",steps:[{id:"s1",tool:"send_message",args:{text:"hi"},risk:"critical"}]};
  const denied=await runtime.execute(plan,{approve:async()=>{asked++;return false;}});
  assert.equal(asked,1);assert.equal(executed,0);assert.equal(denied.results[0].status,"approval_required");
  const cancelled=await runtime.execute({id:"p3",steps:[{id:"s1",tool:"calculate",args:{expression:"1+1"},risk:"low"}]},{shouldStop:()=>true});

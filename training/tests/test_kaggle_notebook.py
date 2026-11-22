@@ -75,7 +75,7 @@ class KaggleNotebookTests(unittest.TestCase):
         self.assertIn('approved:row.approved===true', html)
         self.assertIn('item.approved=status==="approved"', html)
         self.assertIn('x.approved===true&&x.review_status==="approved"', html)
-        self.assertIn('approved<10', html)
+        self.assertIn("approved.length<10", html)
         self.assertNotIn("approve all", html.lower())
         self.assertIn("fetch(defaultPath", html)
         self.assertNotIn('method:"POST"', html)

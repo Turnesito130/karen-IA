@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS memory_vault (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  revision TEXT NOT NULL,
+  envelope TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Revisión del dataset · Karen</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#10131b;color:#eef1f8}
+*{box-sizing:border-box}body{margin:0;padding:22px;max-width:920px;margin-inline:auto}
+h1{font-size:1.55rem;margin:.2rem 0 .5rem}.muted{color:#aab3c5;line-height:1.5}
+.panel{background:#1a2030;border:1px solid #30394c;border-radius:16px;padding:18px;margin:16px 0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.space{justify-content:space-between}
+button,.filelabel{border:1px solid #45516a;background:#27324a;color:#fff;border-radius:10px;padding:11px 14px;font-weight:600;cursor:pointer}
+button.primary{background:#285f49;border-color:#398566}button.reject{background:#5c3035;border-color:#8a4850}
+button:disabled{opacity:.4;cursor:not-allowed}input[type=file]{max-width:100%}
+textarea{width:100%;min-height:110px;resize:vertical;background:#111827;color:#f4f6fb;border:1px solid #3a465e;border-radius:10px;padding:12px;font:inherit;line-height:1.5}
+label{display:block;font-weight:650;margin:15px 0 7px}.pill{display:inline-block;border-radius:99px;padding:5px 10px;background:#303b52;color:#dbe5f8;font-size:.85rem}
+.pill.ok{background:#174d39;color:#b9f3d8}.pill.no{background:#5b3038;color:#ffd8dc}
+.progress{height:8px;background:#2b3448;border-radius:99px;overflow:hidden;margin-top:12px}.progress>div{height:100%;background:#64c99a;width:0}
+#message{min-height:1.5em;color:#b8c5dc}.small{font-size:.9rem}
+@media(max-width:600px){body{padding:14px}.panel{padding:14px}button{flex:1}}
+</style>
+</head>
+<body>
+<h1>Revisión de ejemplos de entrenamiento de Karen</h1>
+<p class="muted">Lee cada ejemplo y decide tú si debe formar parte del entrenamiento. Nada se aprueba automáticamente. Las decisiones se guardan solo en este navegador y no modifican GitHub.</p>
+<div class="panel">
+ <div class="row space"><strong>Dataset de revisión</strong><span id="loadStatus" class="pill">Cargando…</span></div>
+ <p class="muted small">Se intenta cargar el dataset candidato del repositorio. Si no funciona, selecciona el archivo JSONL que hayas descargado.</p>
+ <input id="file" type="file" accept=".jsonl,.ndjson,.json">
+ <div class="row" style="margin-top:12px">
+  <button id="loadDefault" type="button">Cargar dataset del repositorio</button>
+  <button id="reset" type="button">Reiniciar revisión local</button>
+ </div>
+</div>
+<div class="panel">
+ <div class="row space">
+  <div><strong id="counter">0 / 0</strong><div class="muted small" id="counts">Aprobados: 0 · Pendientes: 0 · Rechazados: 0</div></div>
+  <span id="status" class="pill">Sin cargar</span>
+ </div>
+ <div class="progress"><div id="bar"></div></div>
+ <div class="row space" style="margin-top:16px">
+  <button id="prev" type="button" disabled>← Anterior</button>
+  <span class="pill" id="category">Categoría</span>
+  <button id="next" type="button" disabled>Siguiente →</button>
+ </div>
+ <label for="instruction">Pregunta / instrucción</label>
+ <textarea id="instruction" spellcheck="true" placeholder="Pregunta del ejemplo…"></textarea>
+ <label for="output">Respuesta propuesta</label>
+ <textarea id="output" spellcheck="true" placeholder="Respuesta que Karen aprendería…"></textarea>
+ <p class="muted small" id="source"></p>
+ <div class="row">
+  <button id="approve" class="primary" type="button" disabled>Aprobar este ejemplo</button>
+  <button id="reject" class="reject" type="button" disabled>Rechazar</button>
+  <button id="pending" type="button" disabled>Dejar pendiente</button>
+ </div>
+ <p id="message" class="small" role="status" aria-live="polite"></p>
+</div>
+<div class="panel">
+ <strong>Exportar resultados</strong>
+ <p class="muted small">El entrenamiento exige al menos 10 ejemplos aprobados y sin problemas de auditoría. El archivo exportado contiene únicamente los ejemplos que hayas aprobado explícitamente.</p>
+ <div class="row">
+  <button id="exportApproved" class="primary" type="button" disabled>Descargar ejemplos aprobados</button>
+  <button id="exportAll" type="button" disabled>Descargar revisión completa</button>
+ </div>
+</div>
+<script>
+(()=>{
+ "use strict";
+ const $=id=>document.getElementById(id);
+ let rows=[],original=[],index=0,storageKey="";
+ const defaultPath="./datasets/karen-seed-v1.review.jsonl";
+ function parse(text){
+  const parsed=text.split(/\r?\n/).filter(line=>line.trim()).map((line,i)=>{
+   let row;try{row=JSON.parse(line)}catch{throw new Error("JSONL no válido en la línea "+(i+1))}
+   if(!row||typeof row!=="object"||typeof row.instruction!=="string"||typeof row.output!=="string")throw new Error("La línea "+(i+1)+" no contiene instruction y output.");
+   return {...row,approved:row.approved===true,review_status:["approved","rejected","pending"].includes(row.review_status)?row.review_status:"pending"};
+  });
+  if(!parsed.length)throw new Error("El archivo no contiene ejemplos.");
+  return parsed;
+ }
+ function fingerprint(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(36)+"-"+text.length}
+ function save(){try{localStorage.setItem(storageKey,JSON.stringify(rows))}catch{ $("message").textContent="No se pudo guardar el progreso local; descarga la revisión antes de cerrar."}}
+ function restore(text){
+  original=parse(text);storageKey="karen-review-"+fingerprint(text);rows=original.map(x=>({...x}));
+  try{const saved=JSON.parse(localStorage.getItem(storageKey)||"null");if(Array.isArray(saved)&&saved.length===rows.length)rows=saved.map((x,i)=>({...original[i],...x}));}catch{}
+  index=0;$("loadStatus").textContent="Dataset cargado";$("loadStatus").className="pill ok";render();
+ }
+ function counts(){const approved=rows.filter(x=>x.approved===true&&x.review_status==="approved").length;const rejected=rows.filter(x=>x.review_status==="rejected").length;const pending=rows.length-approved-rejected;return{approved,rejected,pending}}
+ function render(){
+  const loaded=rows.length>0;
+  $("counter").textContent=loaded?(index+1)+" / "+rows.length:"0 / 0";
+  const c=counts();$("counts").textContent="Aprobados: "+c.approved+" · Pendientes: "+c.pending+" · Rechazados: "+c.rejected;
+  $("bar").style.width=loaded?((c.approved/rows.length)*100)+"%":"0";
+  $("prev").disabled=!loaded||index===0;$("next").disabled=!loaded||index>=rows.length-1;
+  $("instruction").disabled=!loaded;$("output").disabled=!loaded;
+  $("approve").disabled=!loaded;$("reject").disabled=!loaded;$("pending").disabled=!loaded;
+  $("exportApproved").disabled=c.approved<10;$("exportAll").disabled=!loaded;
+  if(!loaded){$("status").textContent="Sin cargar";$("status").className="pill";$("category").textContent="Categoría";$("instruction").value="";$("output").value="";$("source").textContent="";return}
+  const item=rows[index];$("instruction").value=item.instruction;$("output").value=item.output;
+  $("category").textContent=item.category||"Sin categoría";$("source").textContent="Fuente: "+(item.source||"No indicada");
+  $("status").textContent=item.review_status==="approved"?"Aprobado":item.review_status==="rejected"?"Rechazado":"Pendiente";
+  $("status").className="pill "+(item.review_status==="approved"?"ok":item.review_status==="rejected"?"no":"");
+  $("message").textContent="";
+ }
+ function edit(field,value){if(!rows.length)return;const item=rows[index];if(item[field]===value)return;item[field]=value;if(item.approved===true){item.approved=false;item.review_status="pending";delete item.approved_at;$("message").textContent="Has editado el ejemplo: se ha retirado su aprobación y debes revisarlo de nuevo."}save();render();if(field==="instruction")$("instruction").value=value;if(field==="output")$("output").value=value}
+ function decide(status){if(!rows.length)return;const item=rows[index];item.review_status=status;item.approved=status==="approved";if(item.approved)item.approved_at=new Date().toISOString();else delete item.approved_at;save();render();$("message").textContent=status==="approved"?"Aprobación guardada en este navegador.":status==="rejected"?"Ejemplo rechazado.":"Ejemplo pendiente."}
+ function download(name,data){const blob=new Blob([data],{type:"application/x-ndjson;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+ function exportApproved(){const approved=rows.filter(x=>x.approved===true&&x.review_status==="approved"&&x.instruction.trim()&&x.output.trim());if(approved.length<10)return;download("karen-approved-training.jsonl",approved.map(x=>JSON.stringify(x)).join("\n")+"\n")}
+ async function loadDefault(){ $("loadStatus").textContent="Cargando…";try{const response=await fetch(defaultPath,{cache:"no-store"});if(!response.ok)throw new Error("HTTP "+response.status);restore(await response.text())}catch(error){$("loadStatus").textContent="Selecciona el archivo";$("loadStatus").className="pill no";$("message").textContent="No se pudo cargar automáticamente: "+error.message}}
+ $("file").addEventListener("change",async event=>{const file=event.target.files?.[0];if(!file)return;try{restore(await file.text())}catch(error){$("message").textContent=error.message}});
+ $("loadDefault").addEventListener("click",loadDefault);$("reset").addEventListener("click",()=>{if(!rows.length||!confirm("¿Reiniciar todas las decisiones guardadas en este navegador?"))return;localStorage.removeItem(storageKey);rows=original.map(x=>({...x}));index=0;render()});
+ $("prev").addEventListener("click",()=>{if(index>0){index--;render()}});$("next").addEventListener("click",()=>{if(index<rows.length-1){index++;render()}});
+ $("instruction").addEventListener("input",e=>edit("instruction",e.target.value));$("output").addEventListener("input",e=>edit("output",e.target.value));
+ $("approve").addEventListener("click",()=>{if(!rows[index].instruction.trim()||!rows[index].output.trim()){$("message").textContent="No puedes aprobar un ejemplo vacío.";return}decide("approved")});
+ $("reject").addEventListener("click",()=>decide("rejected"));$("pending").addEventListener("click",()=>decide("pending"));
+ $("exportApproved").addEventListener("click",exportApproved);$("exportAll").addEventListener("click",()=>download("karen-review-complete.jsonl",rows.map(x=>JSON.stringify(x)).join("\n")+"\n"));
+ loadDefault();
+})();
+</script>
+</body>
+</html>

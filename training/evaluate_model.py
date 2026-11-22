@@ -3,6 +3,7 @@
 from __future__ import annotations
 import argparse, json
 from pathlib import Path
+from karen_prompt import KAREN_SYSTEM_PROMPT
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -45,7 +46,7 @@ def main():
             user = row["instruction"]
             if row.get("input"):
                 user += "\n\nContexto:\n" + row["input"]
-            messages = [{"role": "user", "content": user}]
+            messages = [{"role": "system", "content": KAREN_SYSTEM_PROMPT}, {"role": "user", "content": user}]
             prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             inputs = tokenizer(prompt, return_tensors="pt")
             inputs = {key: value.to(model.device) for key, value in inputs.items()}

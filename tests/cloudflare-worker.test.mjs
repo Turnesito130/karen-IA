@@ -2,24 +2,30 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import worker from "../server/cloudflare-worker.mjs";
 
-function fakeDB(){
- let row=null;
+function fakeDB() {
+ let row = null;
  return {
-  prepare(sql){
-   if(sql.startsWith("SELECT"))return{first:async()=>row?{...row}:null};
-   return{bind(...args){return{run:async()=>{
-    if(sql.startsWith("INSERT")){
-     if(row)return{success:true,meta:{changes:0}};
-     row={revision:args[0],envelope:args[1]};
-     return{success:true,meta:{changes:1}};
+  prepare(sql) {
+   if (sql.startsWith("SELECT")) return { first: async () => row ? { ...row } : null };
+   return {
+    bind(...args) {
+     return {
+      run: async () => {
+       if (sql.startsWith("INSERT")) {
+        if (row) return { success: true, meta: { changes: 0 } };
+        row = { revision: args[0], envelope: args[1] };
+        return { success: true, meta: { changes: 1 } };
+       }
+       if (sql.startsWith("UPDATE")) {
+        if (!row || row.revision !== args[2]) return { success: true, meta: { changes: 0 } };
+        row = { revision: args[0], envelope: args[1] };
+        return { success: true, meta: { changes: 1 } };
+       }
+       throw new Error("SQL no soportado en test");
+      }
+     };
     }
-    if(sql.startsWith("UPDATE")){
-     if(!row||row.revision!==args[2])return{success:true,meta:{changes:0}};
-     row={revision:args[0],envelope:args[1]};
-     return{success:true,meta:{changes:1}};
-    }
-    throw new Error("SQL no soportado en test");
-   }}};
+   };
   }
  };
 }

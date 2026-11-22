@@ -35,6 +35,17 @@ No pegues tokens privados ni claves en scripts o en Git.
 4. No incluyas contraseñas, datos personales sensibles, conversaciones de terceros ni material sin derechos de uso.
 5. La aprobación debe ser humana, nunca automática.
 
+### Generar candidatos sin inventar nuevos hechos
+
+Para ampliar las instrucciones a partir de fichas de conocimiento ya revisadas, crea un JSONL con `concept`, `definition`, `source` y `approved: true`. Después ejecuta:
+
+```bash
+python training/generate_candidates.py --input training/datasets/approved-facts.jsonl --output training/datasets/candidates.jsonl
+```
+
+El generador crea variantes de preguntas usando exactamente la definición proporcionada. **Todos los resultados salen con `approved: false`** y requieren revisión humana. No genera conocimiento nuevo ni comprueba que una ficha sea verdadera. Solo después de revisar cada fila se puede aprobar manualmente para incorporarla a `raw.jsonl`.
+
+
 ```bash
 python training/prepare_dataset.py --input training/datasets/raw.jsonl --output-dir training/datasets/prepared
 ```

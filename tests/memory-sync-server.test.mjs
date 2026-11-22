@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createMemoryVaultServer } from "../server/memory-sync-server.mjs";
@@ -26,6 +26,10 @@ test("el servidor exige autorización y almacena únicamente sobres cifrados",as
   assert.equal(stale.status,412);
   const updated=await fetch(base,{method:"PUT",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json","If-Match":'"'+revision+'"'},body:JSON.stringify({envelope:cipher})});
   assert.equal(updated.status,200);
+  const corrupted=JSON.parse(await readFile(file,"utf8"));corrupted.revision="wrong-revision";
+  await writeFile(file,JSON.stringify(corrupted),"utf8");
+  const integrity=await fetch(base,{headers:{Authorization:"Bearer "+token}});
+  assert.equal(integrity.status,500);
  }finally{await new Promise(resolve=>server.close(resolve));await rm(dir,{recursive:true,force:true});}
 });
 

@@ -62,6 +62,42 @@ python training/evaluate_model.py --model-path /ruta/al/modelo-base-local --adap
 
 Compara ambas salidas manualmente con el mismo test. Usa la rúbrica de `training/EVALUATION_RUBRIC.md` para puntuar exactitud, honestidad, seguimiento de instrucciones, seguridad y claridad. No uses test para seguir entrenando. La pérdida de entrenamiento no demuestra por sí sola que Karen sea más capaz.
 
+## Registro progresivo y promoción segura
+
+Cada entrenamiento debe conservarse como una versión separada. No se sobrescribe el modelo anterior ni se activa automáticamente un adaptador recién entrenado.
+
+1. Genera las respuestas del modelo base y del adaptado sobre exactamente el mismo conjunto test.
+2. Una persona puntúa ambos resultados con la rúbrica. Resume las medias de 0 a 2 en una copia de `training/evaluation-summary.template.json`; indica el número real de ejemplos revisados y pon `reviewed_by_human: true` solo después de revisarlos.
+3. Registra la ejecución evaluada:
+
+```bash
+python training/progressive_training.py register \
+  --run-dir training/checkpoints/karen-v1 \
+  --evaluation training/evaluation/karen-v1-summary.json
+```
+
+4. Lista las versiones y sus estados:
+
+```bash
+python training/progressive_training.py list
+```
+
+5. Solo si la candidata supera las reglas, promuévela explícitamente:
+
+```bash
+python training/progressive_training.py promote --version karen-0001
+```
+
+La puerta de promoción bloquea puntuaciones inválidas, evaluaciones no revisadas por una persona, cualquier error crítico, regresiones en honestidad o seguridad y una media global inferior a la del modelo base. El registro calcula el SHA-256 del adaptador y vuelve a comprobarlo antes de activarlo. La versión anterior queda marcada como `previous`; sus archivos no se borran.
+
+El registro de versiones es local al equipo donde se ejecute. Haz copias de seguridad de `training/registry/versions.json` y de los directorios de checkpoints. Esta herramienta no conecta el adaptador al chat: la activación en el runtime de Karen es una fase independiente y requiere pruebas de compatibilidad.
+
+Pruebas sin GPU ni dependencias de ML:
+
+```bash
+python -m unittest discover -s training/tests -v
+```
+
 ## Exportación opcional
 ```bash
 python training/export_model.py --adapter training/checkpoints/karen-v1/adapter --format merged_16bit --output training/exports/karen-v1
@@ -72,7 +108,6 @@ La exportación puede necesitar mucha memoria y disco. GGUF depende de la compat
 ## Estado verificable
 Los scripts pueden comprobarse sintácticamente sin GPU; eso no equivale a instalar Unsloth ni completar un entrenamiento. El entrenamiento solo se considera verificado tras ejecutarlo en hardware compatible, conservar logs y revisar respuestas. Los datos y artefactos pesados se excluyen de Git.
 
-
 ## Entrenamiento local experimental con nanoGPT (CPU)
 
 Para el Windows conocido (Intel UHD, 8 GB RAM, sin CUDA NVIDIA) hay un flujo experimental de caracteres:
@@ -81,10 +116,12 @@ Para el Windows conocido (Intel UHD, 8 GB RAM, sin CUDA NVIDIA) hay un flujo exp
 - Lanzador PowerShell: `training/run_local_nanogpt.ps1`
 - Dependencias auxiliares: `training/requirements-local.txt`
 
-Desde la raíz del repositorio, prepara primero los datos (ver más abajo) y ejecuta:
+Desde la raíz del repositorio, prepara primero los datos y ejecuta:
+
 ```powershell
 powershell -ExecutionPolicy Bypass -File training/run_local_nanogpt.ps1
 ```
+
 Esto clona nanoGPT en `external/nanoGPT` y ejecuta una configuración diminuta en CPU. Es un experimento de aprendizaje del pipeline; no produce un asistente conversacional comparable a un LLM.
 
 ## Entrenamiento remoto con GPU en Kaggle

@@ -1,4 +1,4 @@
-/* ev · Gmail, Classroom y Drive (solo lectura) */
+/* Karen · Gmail, Classroom y Drive (solo lectura) */
 let gtoken = null;
 const SCOPES = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/calendar.readonly";
 function loadGsi() {
@@ -9,7 +9,7 @@ function loadGsi() {
   });
 }
 async function connectGoogle() {
-  if (location.protocol !== "https:") { showSub("Para conectar Google, abre E.D. desde una dirección HTTPS. El cerebro local funciona desde Archivos, pero Google OAuth no admite el modo file://."); return; }
+  if (location.protocol !== "https:") { showSub("Para conectar Google, abre Karen desde una dirección HTTPS. El cerebro local funciona desde Archivos, pero Google OAuth no admite el modo file://."); return; }
   let cid = store.get("ed_gcid");
   if (!cid) { cid = (prompt("Pega tu ID de cliente de Google (termina en .apps.googleusercontent.com)") || "").trim(); if (!cid) return; store.set("ed_gcid", cid); }
   try {
@@ -121,7 +121,7 @@ async function syncEDMemoryToGoogle() {
     if (typeof buildEDMemoryBackupData !== "function") throw new Error("La copia local todavía no está preparada.");
     const payload = await buildEDMemoryBackupData();
     await driveUploadAppData(payload);
-    showSub("Memoria de E.D. sincronizada en el espacio privado de la aplicación en Google Drive.");
+    showSub("Memoria de Karen sincronizada en el espacio privado de la aplicación en Google Drive.");
     return true;
   } catch (error) { showSub("No pude sincronizar la memoria: " + (error?.message || String(error))); return false; }
 }
@@ -129,7 +129,7 @@ async function restoreEDMemoryFromGoogle() {
   try {
     if (!gtoken) { showSub("Primero conecta Google con el botón G."); return false; }
     const payload = await driveDownloadAppData();
-    if (!payload) { showSub("No hay una copia de E.D. en Google Drive todavía."); return false; }
+    if (!payload) { showSub("No hay una copia de Karen en Google Drive todavía."); return false; }
     if (typeof mergeEDMemoryBackupData !== "function") throw new Error("La importación local todavía no está preparada.");
     return await mergeEDMemoryBackupData(payload);
   } catch (error) { showSub("No pude recuperar la memoria: " + (error?.message || String(error))); return false; }

@@ -72,8 +72,10 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
   function search(query,{limit=8,includeUncertain=false}={}){
     const queryTokens=[...new Set(tokens(query))];
     if(!queryTokens.length)return [];
-    return read().map(item=>{
+    const all=read();
+    return all.map(item=>{
       if(item.status!=="active"&&!(includeUncertain&&item.status==="uncertain"))return null;
+      if(item.status==="active"&&all.some(other=>other.status==="uncertain"&&other.type===item.type&&similarity(other.content,item.content)>=.45))return null;
       const contentTokens=new Set(tokens(item.content+" "+item.type));
       const matches=queryTokens.filter(token=>contentTokens.has(token)).length;
       if(!matches)return null;

@@ -54,3 +54,12 @@ test("audit callback failure cannot crash execution",async()=>{
  assert.equal(result.results[0].status,"completed");
  assert.equal(runtime.diagnostics().auditFailures,1);
 });
+
+test("plans ordered multi-step requests and marks unsupported segments",()=>{
+ const plan=planTask("busca en internet documentación de Node y después abre https://nodejs.org; enciende la bombilla");
+ assert.equal(plan.steps.length,2);
+ assert.equal(plan.steps[0].tool,"search");
+ assert.equal(plan.steps[1].tool,"open_url");
+ assert.equal(plan.status,"partially_planned");
+ assert.match(plan.unparsedSegments[0],/enciende la bombilla/);
+});

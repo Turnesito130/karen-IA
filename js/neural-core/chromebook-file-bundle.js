@@ -245,44 +245,6 @@ function inferRelation({facts=[],query,maxDepth=6}={}){
 
 Object.assign(exports, { inferRelation });
   };
-  for(let index=0;index<facts.length;index++){
-    const fact=facts[index]||{};
-    const statement=typeof fact.statement==="string"?fact.statement:
-      typeof fact.text==="string"?fact.text:
-      String(fact.question||"")+" es "+String(fact.answer||"");
-    const edge=parseRelation(statement);
-    if(!edge)continue;
-    const evidence={id:typeof fact.id==="string"?fact.id:"fact-"+index,statement};
-    add(edge.negated?negative:positive,edge,evidence);
-  }
-  const directPositive=positive.get(wanted.from)?.get(wanted.to)||[];
-  const directNegative=negative.get(wanted.from)?.get(wanted.to)||[];
-  if(directPositive.length&&directNegative.length)return {status:"conflict",path:[wanted.from,wanted.to],evidence:[...directPositive,...directNegative]};
-  if(wanted.negated&&directNegative.length)return {status:"entailed",path:[wanted.from,wanted.to],evidence:directNegative};
-  if(!wanted.negated&&directNegative.length)return {status:"contradicted",path:[wanted.from,wanted.to],evidence:directNegative};
-  const queue=[{term:wanted.from,path:[wanted.from],evidence:[]}],seen=new Set([wanted.from]);
-  while(queue.length){
-    const current=queue.shift();
-    if(current.path.length>maxDepth+1)continue;
-    const edges=positive.get(current.term);
-    if(!edges)continue;
-    for(const [next,proof] of edges){
-      const path=[...current.path,next],evidence=[...current.evidence,...proof];
-      const neg=negative.get(wanted.from)?.get(next)||[];
-      if(next===wanted.to){
-        if(neg.length)return {status:"conflict",path,evidence:[...evidence,...neg]};
-        return {status:wanted.negated?"contradicted":"entailed",path,evidence};
-      }
-      if(!seen.has(next)){seen.add(next);queue.push({term:next,path,evidence});}
-    }
-  }
-  if(wanted.negated&&directPositive.length)return {status:"contradicted",path:[wanted.from,wanted.to],evidence:directPositive};
-  return {status:"unknown",path:[],evidence:[]};
-}
-
-Object.assign(exports, { inferRelation });
-  };
-
   definitions["./neural-core/native-cognition.mjs"] = async function(exports, require) {
 const { calculateNaturalExpression } = await require("./natural-calculator.js");
 const { inferRelation } = await require("./inference-engine.mjs");
@@ -332,7 +294,6 @@ function createNativeCognition({storage=null}={}){
 
 Object.assign(exports, { createNativeCognition });
   };
-
   definitions["./neural-core/brain-provider.mjs"] = async function(exports, require) {
 const { createNativeCognition } = await require("./native-cognition.mjs");
 const { createLocalTransformerBrain } = await require("./local-transformer-brain.mjs");
@@ -354,7 +315,6 @@ function createLocalBrainProvider({cognition=null,storage=null}={}){
 
 Object.assign(exports, { createLocalBrainProvider });
   };
-
   definitions["./neural-core/agent-runtime.mjs"] = async function(exports, require) {
 /**
  * Karen Agent Runtime v0.2
@@ -1609,7 +1569,7 @@ Object.assign(exports, { reviewJavaScript });
   definitions["./neural-core/openjarvis-adapter.mjs"] = async function(exports, require) {
 /**
  * Karen · OpenJarvis-inspired local architecture adapter.
- * Maps Intelligence, Engine, Agent, Memory and Learning primitives to E.D.'s
+ * Maps Intelligence, Engine, Agent, Memory and Learning primitives to Karen's
  * native JavaScript cognition. No Python runtime, model weights, CDN or AI API.
  * Traces intentionally store metadata only, never prompts or private answers.
  */

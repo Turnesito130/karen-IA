@@ -3,7 +3,7 @@
  * No ejecuta código ni sustituye parser, pruebas, SAST completo o revisión humana.
  */
 function maskCommentsAndStrings(source){
-  const chars=[...source],out=[...source];
+  const chars=source.split(""),out=source.split("");
   let i=0,state="code",quoteChar=null;
   const blank=(at)=>{if(out[at]!=="\n"&&out[at]!=="\r")out[at]=" ";};
   while(i<chars.length){

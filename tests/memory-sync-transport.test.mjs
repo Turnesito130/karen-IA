@@ -48,6 +48,7 @@ test("una frase incorrecta no puede descifrar ni sobrescribir recuerdos",async()
 
 test("rechaza HTTP remoto, tokens débiles y frases cortas",()=>{
  assert.throws(()=>createEncryptedMemoryTransport({baseUrl:"http://memory.example.test",accessToken:"x".repeat(48),passphrase:"frase-segura-larga"}),/HTTPS/);
+ assert.throws(()=>createEncryptedMemoryTransport({baseUrl:"https://memory.example.test/path",accessToken:"x".repeat(48),passphrase:"frase-segura-larga"}),/HTTPS/);
  assert.throws(()=>createEncryptedMemoryTransport({baseUrl:"https://memory.example.test",accessToken:"short",passphrase:"frase-segura-larga"}),/32 caracteres/);
  assert.throws(()=>createEncryptedMemoryTransport({baseUrl:"https://memory.example.test",accessToken:"x".repeat(48),passphrase:"corta"}),/12 caracteres/);
 });

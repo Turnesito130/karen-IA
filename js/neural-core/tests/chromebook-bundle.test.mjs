@@ -2,9 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import vm from "node:vm";
+import { webcrypto } from "node:crypto";
+import { TextEncoder, TextDecoder } from "node:util";
 test("Chromebook file bundle loads current memory, knowledge, autonomy and review modules",async()=>{
  const source=await readFile(new URL("../chromebook-file-bundle.js",import.meta.url),"utf8");
- const sandbox={window:{}};
+ const sandbox={window:{},TextEncoder,TextDecoder,btoa,atob,crypto:webcrypto,fetch};
  vm.runInNewContext(source,sandbox,{timeout:2000});
  const modules=sandbox.window.EDModules;
  assert.equal(typeof modules.import,"function");

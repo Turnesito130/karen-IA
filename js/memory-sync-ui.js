@@ -19,13 +19,10 @@
   function status(message){$id("karenSyncStatus").textContent=message;}
   function clearSecrets(){ $id("karenSyncToken").value="";$id("karenSyncPassphrase").value="";pending=null;$id("karenSyncRun").disabled=true; }
   $id("karenSyncPreview").addEventListener("click",async()=>{
-    const button=$id("karenSyncPreview");button.disabled=true;clearSecrets();
-    const url=$id("karenSyncUrl").value.trim(),token=$id("karenSyncToken").value,passphrase=$id("karenSyncPassphrase").value;
-    // Captura antes de limpiar: no se persiste en almacenamiento.
-    const accessToken=token,secret=passphrase;
+    const button=$id("karenSyncPreview");button.disabled=true;pending=null;$id("karenSyncRun").disabled=true;
+    const url=$id("karenSyncUrl").value.trim(),accessToken=$id("karenSyncToken").value,secret=$id("karenSyncPassphrase").value;
     try{
-      const [memoryModule,transportModule,syncModule]=await Promise.all([
-        EDModules.import("./neural-core/memory-store.mjs"),
+      const [transportModule,syncModule]=await Promise.all([
         EDModules.import("./neural-core/memory-sync-transport.mjs"),
         EDModules.import("./neural-core/memory-sync.mjs")
       ]);
@@ -33,7 +30,8 @@
       const transport=transportModule.createEncryptedMemoryTransport({baseUrl:url,accessToken,passphrase:secret});
       const sync=syncModule.createMemorySync({memory,transport,deviceId:deviceId()});
       const preview=await sync.preview();
-      pending={sync,accessToken,secret};
+      pending={sync};
+      $id("karenSyncToken").value="";$id("karenSyncPassphrase").value="";
       const conflictCount=preview.conflicts?.length||0;
       status("Previsualización lista. Recuerdos locales: "+preview.localCount+
         (preview.remoteEmpty?" · servidor vacío":" · recuerdos nuevos para combinar: "+preview.added)+

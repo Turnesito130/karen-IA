@@ -73,6 +73,10 @@ Empieza con una ejecución pequeña. Ajusta longitud, rango LoRA, épocas y batc
 
 También puedes copiar y editar `training/config.example.json` y ejecutar `python training/train_unsloth.py --config training/mi-config.json`. Los argumentos de la línea de comandos prevalecen sobre los valores del JSON.
 
+## Instrucciones comunes y benchmark reservado
+
+El prompt de sistema compartido está en `training/karen_prompt.py`; el entrenador y el evaluador usan exactamente las mismas instrucciones de identidad, honestidad y seguridad. El benchmark independiente `training/evaluation/karen-benchmark-v1.jsonl` contiene casos en español de razonamiento, matemáticas, incertidumbre, privacidad y acciones. No se incluye en los splits de entrenamiento. El Notebook genera respuestas base y adaptadas para ese benchmark y deben revisarse manualmente.
+
 ## Evaluación
 ```bash
 python training/evaluate_model.py --model-path /ruta/al/modelo-base-local --test training/datasets/prepared/test.jsonl --output training/evaluation/base.jsonl

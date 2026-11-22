@@ -6,6 +6,7 @@ on:
       - arquitectura/cerebro-propio-0.1
     paths:
       - "training/**"
+      - "js/neural-core/**"
       - ".github/workflows/karen-training-tests.yml"
   pull_request:
     branches:
@@ -15,6 +16,18 @@ on:
       - ".github/workflows/karen-training-tests.yml"
 
 jobs:
+  neural-core:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test memory, autonomy and knowledge modules
+        run: node --test js/neural-core/tests/*.test.mjs
+
   training-toolkit:
     runs-on: ubuntu-latest
     steps:

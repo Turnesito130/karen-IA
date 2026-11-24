@@ -204,7 +204,16 @@ async function ask(text, byText) {
     }
     messages.push({ role: "user", content: text });
     const provider = await getEDBrainProvider();
-    const answer = await provider.generate(messages);
+    if (!window.KarenReasoning?.createReasoningEngine) {
+      throw new Error("El motor de razonamiento local no se ha cargado.");
+    }
+    const reasoner = window.KarenReasoning.createReasoningEngine({
+      generate: conversation => provider.generate(conversation),
+      verifyMath: expression => calc(expression)
+    });
+    const reasoningResult = await reasoner.run(messages);
+    const answer = reasoningResult.answer
+      + (reasoningResult.status === "verified" ? " (Cálculo comprobado de forma independiente.)" : "");
     refreshEDArchitectureStats();
     if (!answer) throw new Error("El núcleo cognitivo no generó una respuesta.");
     if (bub) bub.textContent = answer;

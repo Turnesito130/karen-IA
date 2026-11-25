@@ -129,8 +129,13 @@ export function createMemorySync({ memory, transport, deviceId, now=()=>new Date
       const result = await transport.compareAndSwap({ expectedRevision:remote.revision, envelope:merged.envelope });
       if (!result || typeof result.ok !== "boolean") throw new TypeError("Respuesta compareAndSwap no válida.");
       if (!result.ok) continue;
-      const incoming = merged.envelope.memories.filter(item => !local.memories.some(existing => existing.id === item.id));
-      if (incoming.length) memory.importJSON({ format:"karen-structured-memory", version:2, memories:incoming }, { consent:true });
+      const synchronized = { format:"karen-structured-memory", version:2, memories:merged.envelope.memories };
+      if (typeof memory.applySyncJSON === "function") {
+        memory.applySyncJSON(synchronized, { consent:true });
+      } else {
+        const incoming = merged.envelope.memories.filter(item => !local.memories.some(existing => existing.id === item.id));
+        if (incoming.length) memory.importJSON({ format:"karen-structured-memory", version:2, memories:incoming }, { consent:true });
+      }
       return { dryRun:false, attempt, revision:result.revision ?? null, added:merged.added,
         updated:merged.updated, conflicts:merged.conflicts, count:merged.envelope.memories.length, note:merged.note };
     }

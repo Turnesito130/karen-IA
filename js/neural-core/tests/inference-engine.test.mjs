@@ -37,3 +37,37 @@ test("reports a negative conclusion from a positive chain",()=>{
 test("rejects unsafe inference depth",()=>{
  assert.throws(()=>inferRelation({facts:[],query:"¿Los perros son animales?",maxDepth:99}),/maxDepth/);
 });
+
+test("detects conflict between a multi-hop positive route and direct negative evidence",()=>{
+ const facts=[
+  {id:"f1",statement:"Los perros son mamíferos"},
+  {id:"f2",statement:"Los mamíferos son animales"},
+  {id:"f3",statement:"Los perros no son animales"}
+ ];
+ const result=inferRelation({facts,query:"¿Los perros son animales?"});
+ assert.equal(result.status,"conflict");
+ assert.deepEqual(result.evidence.map(x=>x.id).sort(),["f1","f2","f3"]);
+});
+
+test("does not stop at the first route when another route proves a contradiction",()=>{
+ const facts=[
+  {id:"f1",statement:"Los gatos son mamíferos"},
+  {id:"f2",statement:"Los gatos son animales"},
+  {id:"f3",statement:"Los mamíferos son animales"},
+  {id:"f4",statement:"Los gatos no son animales"}
+ ];
+ const result=inferRelation({facts,query:"¿Los gatos son animales?"});
+ assert.equal(result.status,"conflict");
+ assert.ok(result.evidence.some(x=>x.id==="f4"));
+});
+
+test("finds a positive conclusion through an alternative route",()=>{
+ const facts=[
+  {id:"f1",statement:"Los gatos son mamíferos"},
+  {id:"f2",statement:"Los mamíferos son vertebrados"},
+  {id:"f3",statement:"Los gatos son vertebrados"}
+ ];
+ const result=inferRelation({facts,query:"¿Los gatos son vertebrados?"});
+ assert.equal(result.status,"entailed");
+ assert.ok(result.evidence.length>0);
+});

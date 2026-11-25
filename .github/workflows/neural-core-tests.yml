@@ -32,3 +32,7 @@ jobs:
       - name: Test hybrid reasoning coordinator
         run: node --experimental-default-type=module js/neural-core/reasoning-coordinator.test.js
 
+      - name: Test symbolic inference engine
+        run: node --experimental-default-type=module --test js/neural-core/tests/inference-engine.test.mjs
+      - name: Test native cognition intelligence
+        run: node --experimental-default-type=module --test js/neural-core/tests/native-cognition-intelligence.test.mjs

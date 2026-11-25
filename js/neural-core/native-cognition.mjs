@@ -1,7 +1,24 @@
 import { calculateNaturalExpression } from "./natural-calculator.js";
 import { inferRelation } from "./inference-engine.mjs";
 const KEY="ed2_native_learning_v1", STOP=new Set(["que","como","para","con","por","una","uno","los","las","del","esta","este","son","ser","es","de","el","la","y","en","un","a"]);
-const clean=x=>String(x||"").trim(), norm=x=>clean(x).toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g,""), words=x=>[...new Set(norm(x).match(/[a-z0-9]{2,}/g)||[])];
+const clean=x=>String(x||"").trim(), norm=x=>clean(x).toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"");
+const STOP=new Set(["que","qué","como","cómo","para","con","por","una","uno","los","las","del","esta","este","son","ser","es","de","el","la","y","en","un","a","al","se","su","sus","mi","tu","me","te","lo","le","les","o","u","si","sí","no","muy","más","mas","tambien","también","cuando","donde","dónde","cual","cuál","quien","quién","sobre","entre","desde","hasta","hay","hacer","hace","hacen"]);
+const CANONICAL=new Map([["sirve","funcion"],["sirven","funcion"],["servir","funcion"],["utilidad","funcion"],["utilidades","funcion"],["funciona","funcion"],["funcionan","funcion"],["funciones","funcion"],["explica","explicar"],["explicame","explicar"],["explicación","explicar"],["definicion","definir"],["define","definir"],["significa","definir"],["significado","definir"],["son","ser"],["es","ser"]]);
+function stem(word){
+ if(CANONICAL.has(word))return CANONICAL.get(word);
+ if(word.length>7&&word.endsWith("amientos"))return word.slice(0,-8);
+ if(word.length>6&&word.endsWith("imiento"))return word.slice(0,-7);
+ if(word.length>6&&word.endsWith("aciones"))return word.slice(0,-7);
+ if(word.length>5&&word.endsWith("acion"))return word.slice(0,-5);
+ if(word.length>5&&word.endsWith("mente"))return word.slice(0,-5);
+ if(word.length>5&&word.endsWith("ando"))return word.slice(0,-4);
+ if(word.length>5&&word.endsWith("iendo"))return word.slice(0,-5);
+ if(word.length>5&&word.endsWith("es"))return word.slice(0,-2);
+ if(word.length>4&&word.endsWith("s"))return word.slice(0,-1);
+ return word;
+}
+const words=x=>[...new Set((norm(x).match(/[a-z0-9]{2,}/g)||[]).filter(w=>!STOP.has(w)).map(stem))];
+
 const storageOf=s=>{try{return s||globalThis.localStorage||null}catch{return null}};
 function read(s){try{const a=JSON.parse(s?.getItem(KEY)||"[]");return Array.isArray(a)?a.filter(x=>x&&typeof x.question==="string"&&typeof x.answer==="string").slice(-500):[]}catch{return []}}
 function write(s,a){try{if(!s)return false;s.setItem(KEY,JSON.stringify(a.slice(-500)));return true}catch{return false}}

@@ -1,7 +1,7 @@
 import { calculateNaturalExpression } from "./natural-calculator.js";
 import { inferRelation } from "./inference-engine.mjs";
 const KEY="ed2_native_learning_v1";
-const clean=x=>String(x||"").trim(), norm=x=>clean(x).toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"");
+const clean=x=>String(x||"").trim(), norm=x=>clean(x).toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 const STOP=new Set(["que","qué","como","cómo","para","con","por","una","uno","los","las","del","esta","este","son","ser","es","de","el","la","y","en","un","a","al","se","su","sus","mi","tu","me","te","lo","le","les","o","u","si","sí","no","muy","más","mas","tambien","también","cuando","donde","dónde","cual","cuál","quien","quién","sobre","entre","desde","hasta","hay","hacer","hace","hacen"]);
 const CANONICAL=new Map([["sirve","funcion"],["sirven","funcion"],["servir","funcion"],["utilidad","funcion"],["utilidades","funcion"],["funciona","funcion"],["funcionan","funcion"],["funciones","funcion"],["explica","explicar"],["explicame","explicar"],["explicación","explicar"],["definicion","definir"],["define","definir"],["significa","definir"],["significado","definir"],["son","ser"],["es","ser"]]);
 function stem(word){

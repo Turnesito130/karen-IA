@@ -30,10 +30,10 @@ No pegues tokens privados ni claves en scripts o en Git.
 
 ## Datos
 1. Copia `training/datasets/raw.example.jsonl` a `training/datasets/raw.jsonl`.
-2. Añade respuestas correctas, revisadas y autorizadas.
-3. Cada línea debe contener `instruction`, `output` y `approved: true`; `input` y `source` son opcionales.
-4. No incluyas contraseñas, datos personales sensibles, conversaciones de terceros ni material sin derechos de uso.
-5. La aprobación debe ser humana, nunca automática.
+2. **Todos los ejemplos de la plantilla empiezan con `approved: false`**: son demostraciones, no datos autorizados para entrenar.
+3. Comprueba cada respuesta, su fuente y los permisos de uso. Solo después de revisarla cambia manualmente su campo a `approved: true`; elimina o corrige lo que no puedas verificar.
+4. Cada línea aprobada debe contener `instruction`, `output` y `approved: true`; `input` y `source` son opcionales en el formato, aunque se recomienda documentar siempre la fuente.
+5. No incluyas contraseñas, datos personales sensibles, conversaciones de terceros ni material sin derechos de uso. La aprobación debe ser humana, nunca automática.
 
 ### Generar candidatos sin inventar nuevos hechos
 

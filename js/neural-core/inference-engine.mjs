@@ -1,6 +1,6 @@
 /**
  * Motor de inferencia simbólica de Karen.
- * Solo deduce relaciones explícitas; si hay evidencia enfrentada, devuelve conflicto.
+ * Solo deduce relaciones explícitas y conserva las evidencias enfrentadas.
  */
 const ARTICLES=new Set(["un","una","unos","unas","el","la","los","las","todos","todas"]);
 const STOP=new Set(["que","como","para","con","por","de","del","y","en","a"]);
@@ -46,25 +46,31 @@ export function inferRelation({facts=[],query,maxDepth=6}={}){
   }
   const directPositive=positive.get(wanted.from)?.get(wanted.to)||[];
   const directNegative=negative.get(wanted.from)?.get(wanted.to)||[];
-  if(directPositive.length&&directNegative.length)return {status:"conflict",path:[wanted.from,wanted.to],evidence:[...directPositive,...directNegative]};
-  if(wanted.negated&&directNegative.length)return {status:"entailed",path:[wanted.from,wanted.to],evidence:directNegative};
-  if(!wanted.negated&&directNegative.length)return {status:"contradicted",path:[wanted.from,wanted.to],evidence:directNegative};
-  const queue=[{term:wanted.from,path:[wanted.from],evidence:[]}],seen=new Set([wanted.from]);
+  // Busca rutas simples: no descarta una segunda ruta solo por compartir un nodo.
+  const queue=[{term:wanted.from,path:[wanted.from],evidence:[]}];
+  const positiveProofs=[];
   while(queue.length){
     const current=queue.shift();
-    if(current.path.length>maxDepth+1)continue;
-    const edges=positive.get(current.term);
-    if(!edges)continue;
-    for(const [next,proof] of edges){
+    if(current.path.length>maxDepth)continue;
+    for(const [next,proof] of positive.get(current.term)||[]){
+      if(current.path.includes(next))continue;
       const path=[...current.path,next],evidence=[...current.evidence,...proof];
-      const neg=negative.get(wanted.from)?.get(next)||[];
-      if(next===wanted.to){
-        if(neg.length)return {status:"conflict",path,evidence:[...evidence,...neg]};
-        return {status:wanted.negated?"contradicted":"entailed",path,evidence};
-      }
-      if(!seen.has(next)){seen.add(next);queue.push({term:next,path,evidence});}
+      if(next===wanted.to){positiveProofs.push({path,evidence});continue;}
+      if(path.length<=maxDepth)queue.push({term:next,path,evidence});
     }
   }
-  if(wanted.negated&&directPositive.length)return {status:"contradicted",path:[wanted.from,wanted.to],evidence:directPositive};
+  const positiveProof=positiveProofs[0]||null;
+  const hasPositive=Boolean(positiveProof||directPositive.length);
+  const hasNegative=directNegative.length>0;
+  const evidence=[...(positiveProof?.evidence||directPositive),...directNegative];
+  const path=positiveProof?.path||[wanted.from,wanted.to];
+  if(hasPositive&&hasNegative)return {status:"conflict",path,evidence};
+  if(wanted.negated){
+    if(hasNegative)return {status:"entailed",path:[wanted.from,wanted.to],evidence:directNegative};
+    if(hasPositive)return {status:"contradicted",path,evidence:positiveProof?.evidence||directPositive};
+  }else{
+    if(hasNegative)return {status:"contradicted",path:[wanted.from,wanted.to],evidence:directNegative};
+    if(hasPositive)return {status:"entailed",path,evidence:positiveProof?.evidence||directPositive};
+  }
   return {status:"unknown",path:[],evidence:[]};
 }

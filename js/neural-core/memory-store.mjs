@@ -156,5 +156,25 @@ export function createMemoryStore({storage,key=DEFAULT_KEY,now=()=>new Date().to
     if(current.length+incoming.length>1000)throw new RangeError("La importación superaría los 1000 recuerdos. Exporta o elimina recuerdos antes de importar.");
     write([...current,...incoming]);return incoming.length;
   }
-  return Object.freeze({remember,search,findConflicts,resolveConflict,update,forget,forgetMatching,clear,list,context,health,exportJSON,importJSON});
+  function applySyncJSON(input,{consent=false}={}){
+    if(consent!==true)throw new Error("Aplicar una sincronización requiere confirmación explícita.");
+    const parsed=typeof input==="string"?JSON.parse(input):input;
+    if(!parsed||parsed.format!=="karen-structured-memory"||parsed.version!==2||!Array.isArray(parsed.memories)||parsed.memories.length>1000)throw new TypeError("Paquete de sincronización no válido.");
+    const current=read(),byId=new Map(current.map(item=>[item.id,item]));
+    let added=0,updated=0;
+    for(const item of parsed.memories){
+      if(!item||typeof item.id!=="string"||!item.id||item.id.length>100||typeof item.content!=="string"||!item.content.trim()||item.content.length>1200||!TYPES.has(item.type)||typeof item.source!=="string"||item.source.length>160||!Number.isFinite(item.confidence)||item.confidence<0||item.confidence>1||!STATUSES.has(item.status)||typeof item.createdAt!=="string"||typeof item.updatedAt!=="string")throw new TypeError("El paquete contiene un recuerdo no válido.");
+      const next={id:item.id,content:item.content.trim(),type:item.type,source:item.source,confidence:item.confidence,status:item.status,createdAt:item.createdAt,updatedAt:item.updatedAt};
+      const previous=byId.get(next.id);
+      if(!previous){byId.set(next.id,next);added++;continue;}
+      const incomingTime=Date.parse(next.updatedAt),previousTime=Date.parse(previous.updatedAt);
+      if(Number.isFinite(incomingTime)&&(!Number.isFinite(previousTime)||incomingTime>previousTime||(
+        incomingTime===previousTime&&next.status!==previous.status&&next.status==="uncertain"))){
+        byId.set(next.id,next);updated++;
+      }
+    }
+    if(byId.size>1000)throw new RangeError("La sincronización superaría el límite de 1000 recuerdos.");
+    write([...byId.values()]);return {added,updated,count:byId.size};
+  }
+  return Object.freeze({remember,search,findConflicts,resolveConflict,update,forget,forgetMatching,clear,list,context,health,exportJSON,importJSON,applySyncJSON});
 }

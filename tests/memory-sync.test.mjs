@@ -42,6 +42,20 @@ test("sincroniza en ambas direcciones usando compare-and-swap",async()=>{
  assert.ok(memory.list({status:"all"}).some(x=>x.id==="phone-1"));
 });
 
+test("aplica en el dispositivo las actualizaciones remotas de recuerdos existentes",async()=>{
+ const memory=createMemoryStore({storage:storage(),now:()=>"2026-11-20T10:00:00.000Z"});
+ memory.remember({content:"Preferencia compartida",type:"fact",confidence:.6,consent:true});
+ const local=JSON.parse(memory.exportJSON()).memories[0];
+ const remoteVersion={...local,confidence:.98,updatedAt:"2026-11-24T10:00:00.000Z"};
+ const remote=remoteStore(makeEnvelope("phone",[remoteVersion]));
+ const sync=createMemorySync({memory,transport:remote,deviceId:"laptop",now:()=>"2026-11-25T10:00:00.000Z"});
+ const result=await sync.sync();
+ const saved=memory.list({status:"all"}).find(item=>item.id===local.id);
+ assert.equal(result.updated,1);
+ assert.equal(saved.confidence,.98);
+ assert.equal(saved.updatedAt,"2026-11-24T10:00:00.000Z");
+});
+
 test("conserva ambas versiones como inciertas si el mismo ID tiene contenido distinto",async()=>{
  const memory=createMemoryStore({storage:storage()});
  memory.remember({content:"Versión local",type:"fact",consent:true});
